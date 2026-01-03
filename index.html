@@ -3,25 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EventCrew Pro - Videography Event Management</title>
+    <title>COMMOTION.APP - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
+        .commotion-red { color: #b93a3a; }
+        .bg-commotion-red { background-color: #b93a3a; }
+        .border-commotion-red { border-color: #b93a3a; }
+        .hover-commotion-red:hover { background-color: #a02e2e; }
+        
         .glass {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(185, 58, 58, 0.2);
         }
-        .btn-role:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        
+        .logo-text {
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            color: #b93a3a;
         }
-        .btn-role {
+        
+        input:focus {
+            outline: none;
+            border-color: #b93a3a;
+            box-shadow: 0 0 0 3px rgba(185, 58, 58, 0.1);
+        }
+        
+        .login-btn {
             transition: all 0.3s ease;
+            background-color: #b93a3a;
+        }
+        
+        .login-btn:hover {
+            background-color: #a02e2e;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(185, 58, 58, 0.3);
         }
     </style>
 </head>
@@ -30,72 +53,132 @@
     <div class="glass rounded-2xl shadow-2xl max-w-md w-full p-8">
         <!-- Logo/Header -->
         <div class="text-center mb-8">
-            <div class="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full p-4 mb-4">
-                <i class="fas fa-video text-white text-4xl"></i>
+            <h1 class="text-5xl logo-text mb-2">COMMOTION</h1>
+            <p class="text-xl font-bold text-gray-700">.APP</p>
+            <p class="text-sm text-gray-600 mt-2">Event Management System</p>
+            <p class="text-xs text-gray-500 mt-1">Commotion Studio · New Zealand</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 mb-6">
+            <p class="text-sm text-red-800 text-center">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <span id="errorText">Invalid username or password</span>
+            </p>
+        </div>
+
+        <!-- Login Form -->
+        <form onsubmit="handleLogin(event)" class="space-y-6">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    required
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg transition-all"
+                    placeholder="Enter your username"
+                    autocomplete="username"
+                >
             </div>
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">EventCrew Pro</h1>
-            <p class="text-gray-600">Festival Videography Management</p>
-        </div>
 
-        <!-- Demo Notice -->
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p class="text-sm text-blue-800 text-center">
-                <i class="fas fa-info-circle mr-2"></i>
-                <strong>Demo Mode:</strong> Select a role to explore the platform
-            </p>
-        </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    required
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg transition-all"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                >
+            </div>
 
-        <!-- Role Selection -->
-        <div class="space-y-4">
-            <h2 class="text-lg font-semibold text-gray-700 mb-4">Select Your Role</h2>
-            
-            <button onclick="login('admin')" class="btn-role w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg p-4 flex items-center justify-between hover:shadow-lg">
-                <div class="flex items-center">
-                    <i class="fas fa-user-shield text-2xl mr-4"></i>
-                    <div class="text-left">
-                        <div class="font-semibold">Admin Dashboard</div>
-                        <div class="text-sm opacity-90">Full system access</div>
-                    </div>
-                </div>
-                <i class="fas fa-arrow-right"></i>
+            <button type="submit" class="login-btn w-full text-white rounded-lg py-3 px-4 font-semibold text-lg">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Sign In
             </button>
+        </form>
 
-            <button onclick="login('client')" class="btn-role w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg p-4 flex items-center justify-between hover:shadow-lg">
-                <div class="flex items-center">
-                    <i class="fas fa-building text-2xl mr-4"></i>
-                    <div class="text-left">
-                        <div class="font-semibold">Client Portal</div>
-                        <div class="text-sm opacity-90">View your events</div>
-                    </div>
-                </div>
-                <i class="fas fa-arrow-right"></i>
-            </button>
-
-            <button onclick="login('crew')" class="btn-role w-full bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg p-4 flex items-center justify-between hover:shadow-lg">
-                <div class="flex items-center">
-                    <i class="fas fa-camera text-2xl mr-4"></i>
-                    <div class="text-left">
-                        <div class="font-semibold">Crew Portal</div>
-                        <div class="text-sm opacity-90">Your schedule & tasks</div>
-                    </div>
-                </div>
-                <i class="fas fa-arrow-right"></i>
-            </button>
-        </div>
-
-        <!-- Demo Data Info -->
+        <!-- Test Credentials -->
         <div class="mt-8 pt-6 border-t border-gray-200">
-            <p class="text-xs text-gray-500 text-center">
-                Demo includes real NZ festivals: Hidden Lakes, Festival One, Electric Avenue, Rhythm & Alps, and more
-            </p>
+            <p class="text-xs font-semibold text-gray-600 mb-3 text-center">Test Credentials:</p>
+            <div class="space-y-2 text-xs text-gray-500">
+                <div class="flex justify-between">
+                    <span class="font-semibold">Admin:</span>
+                    <span>jemag / cheeseburger</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-semibold">Client:</span>
+                    <span>ethanw / robinsons</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-semibold">Crew:</span>
+                    <span>samk / nurse</span>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        function login(role) {
-            // Store role in localStorage
-            localStorage.setItem('userRole', role);
-            localStorage.setItem('userName', role === 'admin' ? 'Admin User' : role === 'client' ? 'Sarah Johnson' : 'Mike Thompson');
+        // User credentials database
+        const USERS = {
+            'jemag': {
+                password: 'cheeseburger',
+                role: 'admin',
+                fullName: 'Jem Anderson-Gardner',
+                userId: 'user-admin-001'
+            },
+            'ethanw': {
+                password: 'robinsons',
+                role: 'client',
+                fullName: 'Ethan Walter',
+                userId: 'user-client-001',
+                clientId: 'client-001'
+            },
+            'samk': {
+                password: 'nurse',
+                role: 'crew',
+                fullName: 'Sam King',
+                userId: 'user-crew-001',
+                crewId: 'crew-001'
+            }
+        };
+
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value.toLowerCase().trim();
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            
+            // Check if user exists and password matches
+            const user = USERS[username];
+            
+            if (!user) {
+                errorText.textContent = 'Username not found';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+            
+            if (user.password !== password) {
+                errorText.textContent = 'Incorrect password';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+            
+            // Successful login - store user data
+            localStorage.setItem('userRole', user.role);
+            localStorage.setItem('userName', user.fullName);
+            localStorage.setItem('userId', user.userId);
+            localStorage.setItem('username', username);
+            
+            if (user.clientId) {
+                localStorage.setItem('clientId', user.clientId);
+            }
+            if (user.crewId) {
+                localStorage.setItem('crewId', user.crewId);
+            }
             
             // Redirect to dashboard
             window.location.href = 'dashboard.html';

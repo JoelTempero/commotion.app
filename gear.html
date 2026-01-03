@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gear Inventory - COMMOTION.APP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .commotion-red { color: #b93a3a; }
+        .bg-commotion-red { background-color: #b93a3a; }
+        .hover-commotion-red:hover { background-color: #a02e2e; }
+        
+        .logo-text {
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+        
+        .gear-card {
+            transition: all 0.2s;
+        }
+        .gear-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <button onclick="window.location.href='dashboard.html'" class="mr-4 text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <span class="text-2xl logo-text commotion-red">COMMOTION</span>
+                    <span class="text-lg font-bold text-gray-600 ml-1">.APP</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600" id="userName">Admin User</span>
+                    <button onclick="logout()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">
+                <i class="fas fa-camera mr-3 commotion-red"></i>
+                Gear Inventory
+            </h1>
+            <p class="text-gray-600 mt-1">Complete equipment list with insurance values</p>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <p class="text-sm font-medium text-gray-600">Total Gear Value</p>
+                <p class="text-2xl font-bold text-gray-900 mt-2" id="totalValue">$85,000</p>
+                <p class="text-xs text-green-600 mt-1"><i class="fas fa-shield-alt"></i> Fully Insured</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <p class="text-sm font-medium text-gray-600">Total Items</p>
+                <p class="text-2xl font-bold text-gray-900 mt-2" id="totalItems">15</p>
+                <p class="text-xs text-gray-600 mt-1">Across all categories</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <p class="text-sm font-medium text-gray-600">Available</p>
+                <p class="text-2xl font-bold text-green-600 mt-2" id="availableItems">11</p>
+                <p class="text-xs text-gray-600 mt-1">Ready to assign</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <p class="text-sm font-medium text-gray-600">In Use</p>
+                <p class="text-2xl font-bold commotion-red mt-2" id="inUseItems">4</p>
+                <p class="text-xs text-gray-600 mt-1">Currently assigned</p>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-100">
+            <div class="flex flex-wrap gap-2">
+                <button onclick="filterGear('all')" class="filter-btn active px-4 py-2 rounded-lg bg-commotion-red text-white font-semibold">
+                    All Equipment
+                </button>
+                <button onclick="filterGear('Camera')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
+                    Cameras
+                </button>
+                <button onclick="filterGear('Lens')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
+                    Lenses
+                </button>
+                <button onclick="filterGear('Drone')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
+                    Drones
+                </button>
+                <button onclick="filterGear('Gimbal')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
+                    Gimbals
+                </button>
+                <button onclick="filterGear('Audio')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
+                    Audio
+                </button>
+                <button onclick="filterGear('Lighting')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
+                    Lighting
+                </button>
+            </div>
+        </div>
+
+        <!-- Gear List -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="gearGrid">
+            <!-- Gear cards will be inserted here -->
+        </div>
+
+    </div>
+
+    <script src="js/demo-data.js"></script>
+    <script>
+        // Set user name
+        const userName = localStorage.getItem('userName') || 'User';
+        document.getElementById('userName').textContent = userName;
+
+        // Calculate stats
+        document.getElementById('totalValue').textContent = '$' + DEMO_DATA.gear.reduce((sum, g) => sum + g.value, 0).toLocaleString();
+        document.getElementById('totalItems').textContent = DEMO_DATA.gear.length;
+        document.getElementById('availableItems').textContent = DEMO_DATA.gear.filter(g => g.status === 'available').length;
+        document.getElementById('inUseItems').textContent = DEMO_DATA.gear.filter(g => g.status === 'in-use').length;
+
+        let currentFilter = 'all';
+
+        function renderGear(filter = 'all') {
+            const grid = document.getElementById('gearGrid');
+            const filteredGear = filter === 'all' 
+                ? DEMO_DATA.gear 
+                : DEMO_DATA.gear.filter(g => g.category === filter);
+
+            grid.innerHTML = filteredGear.map(gear => {
+                const isAvailable = gear.status === 'available';
+                const assignedEvent = gear.assignedTo ? DEMO_DATA.events.find(e => e.id === gear.assignedTo) : null;
+                
+                return `
+                    <div class="gear-card bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center">
+                                <div class="bg-gray-100 rounded-lg p-3 mr-3">
+                                    <i class="fas ${getCategoryIcon(gear.category)} text-gray-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900">${gear.name}</h3>
+                                    <p class="text-sm text-gray-500">${gear.category}</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold ${isAvailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${isAvailable ? 'Available' : 'In Use'}
+                            </span>
+                        </div>
+                        
+                        <div class="space-y-2 text-sm text-gray-600">
+                            <div class="flex justify-between">
+                                <span>Insurance Value:</span>
+                                <span class="font-semibold text-gray-900">$${gear.value.toLocaleString()}</span>
+                            </div>
+                            ${!isAvailable && assignedEvent ? `
+                                <div class="flex justify-between">
+                                    <span>Assigned to:</span>
+                                    <span class="font-semibold commotion-red">${assignedEvent.name.split(' ')[0]}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <button class="w-full px-4 py-2 text-sm font-semibold ${isAvailable ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' : 'bg-red-50 text-red-700'} rounded-lg">
+                                <i class="fas ${isAvailable ? 'fa-edit' : 'fa-eye'} mr-2"></i>
+                                ${isAvailable ? 'Manage' : 'View Details'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterGear(category) {
+            currentFilter = category;
+            
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-commotion-red', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+            event.target.classList.add('active', 'bg-commotion-red', 'text-white');
+            event.target.classList.remove('bg-gray-100', 'text-gray-700');
+            
+            renderGear(category);
+        }
+
+        function getCategoryIcon(category) {
+            const icons = {
+                'Camera': 'fa-video',
+                'Lens': 'fa-eye',
+                'Drone': 'fa-helicopter',
+                'Gimbal': 'fa-circle-notch',
+                'Audio': 'fa-microphone',
+                'Lighting': 'fa-lightbulb',
+                'Monitor': 'fa-tv',
+                'Support': 'fa-grip-vertical',
+                'Storage': 'fa-hdd'
+            };
+            return icons[category] || 'fa-camera';
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+
+        // Initial render
+        renderGear();
+    </script>
+
+</body>
+</html>
