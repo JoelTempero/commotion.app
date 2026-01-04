@@ -120,15 +120,15 @@
             <div class="space-y-2 text-xs text-gray-500">
                 <div class="flex justify-between">
                     <span class="font-semibold">Admin:</span>
-                    <span>jem / jem@commotion.studio</span>
+                    <span>jem / <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="244e414964474b49494b504d4b4a0a575051404d4b">[email&#160;protected]</a></span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-semibold">Client:</span>
-                    <span>ethan / ethan@rhythmandalps.co.nz</span>
+                    <span>ethan / <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2441504c454a64564c5d504c49454a40454854570a474b0a4a5e">[email&#160;protected]</a></span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-semibold">Crew:</span>
-                    <span>sam / sam@crewmail.com</span>
+                    <span>sam / <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a3d0c2cee3c0d1c6d4cec2cacf8dc0ccce">[email&#160;protected]</a></span>
                 </div>
                 <p class="text-center text-gray-400 mt-2">Password: demo123</p>
             </div>
@@ -140,7 +140,7 @@
         </div>
     </div>
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/firebase-config.js"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/firebase-config.js"></script>
     <script>
         // Check if already logged in
         onAuthStateChange(async (user) => {
@@ -235,4 +235,19 @@
                 if (userProfile.crewId) localStorage.setItem('crewId', userProfile.crewId);
                 
                 // Redirect to dashboard
-                window.location.href = '
+                window.location.href = 'dashboard.html';
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                errorText.textContent = 'An error occurred. Please try again.';
+                errorMessage.classList.remove('hidden');
+                
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'SIGN IN';
+                loginSpinner.classList.add('hidden');
+            }
+        }
+    </script>
+
+</body>
+</html>
