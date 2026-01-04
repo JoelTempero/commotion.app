@@ -45,6 +45,27 @@ async function loadFirestoreData() {
         FIRESTORE_DATA.clients = clients;
         FIRESTORE_DATA.tasks = tasks;
         
+        // Ensure admin has a crew record so they can be assigned to events
+        if (userRole === 'admin') {
+            const adminCrewExists = crew.some(c => c.email === 'jem@commotion.studio');
+            if (!adminCrewExists) {
+                const adminCrew = {
+                    id: 'crew-admin',
+                    name: 'Jem Anderson-Gardner',
+                    email: 'jem@commotion.studio',
+                    role: 'Director / Lead Videographer',
+                    phone: '021 123 4567',
+                    rate: 500,
+                    available: true,
+                    isAdmin: true,
+                    paidAmount: 0,
+                    eventPayments: {}
+                };
+                await firestoreHelpers.setDoc('crew', 'crew-admin', adminCrew, false);
+                FIRESTORE_DATA.crew.push(adminCrew);
+            }
+        }
+        
         return true;
     } catch (error) {
         console.error('Error loading Firestore data:', error);
@@ -205,6 +226,7 @@ function loadAdminDashboard() {
 
 function loadClientDashboard() {
     const clientEvents = FIRESTORE_DATA.events.filter(e => e.client_id === clientId);
+    const client = FIRESTORE_DATA.clients.find(c => c.id === clientId) || {};
     const mainEvent = clientEvents[0];
     
     if (!mainEvent) {
@@ -262,6 +284,7 @@ function loadClientDashboard() {
                                 </div>
                                 <p class="text-xs text-gray-600">Due: ${new Date(d.dueDate).toLocaleDateString('en-NZ', {month: 'short', day: 'numeric'})}</p>
                                 <div class="mt-2 bg-gray-200 rounded-full h-2"><div class="bg-commotion-red h-2 rounded-full" style="width: ${d.progress || 0}%"></div></div>
+                                ${d.accessLink ? `<a href="${d.accessLink}" target="_blank" class="inline-flex items-center mt-2 text-xs text-blue-600 hover:underline"><i class="fas fa-external-link-alt mr-1"></i>View Deliverable</a>` : ''}
                             </div>
                         `).join('')}
                     </div>
@@ -313,11 +336,26 @@ function loadClientDashboard() {
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                        <h4 class="font-semibold text-gray-900 mb-3">Account Information</h4>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between p-2 bg-gray-50 rounded"><span class="text-gray-600">Email:</span><span class="font-semibold">${auth.currentUser?.email || '--'}</span></div>
-                            <div class="flex justify-between p-2 bg-gray-50 rounded"><span class="text-gray-600">Account Type:</span><span class="font-semibold">Client</span></div>
-                        </div>
+                        <h4 class="font-semibold text-gray-900 mb-3">Company Profile</h4>
+                        <form onsubmit="event.preventDefault(); saveClientProfile();" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Company Name</label>
+                                <input type="text" id="clientCompany" value="${client.company || ''}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Contact Person</label>
+                                <input type="text" id="clientContact" value="${client.contact || ''}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Phone</label>
+                                <input type="tel" id="clientPhone" value="${client.phone || ''}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" id="clientEmail" value="${client.email || ''}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" readonly>
+                            </div>
+                            <button type="submit" id="saveClientProfileBtn" class="w-full px-4 py-2 bg-commotion-red hover-commotion-red text-white rounded-lg text-sm font-semibold">Save Profile</button>
+                        </form>
                     </div>
                     <div>
                         <h4 class="font-semibold text-gray-900 mb-3">Change Password</h4>
@@ -809,7 +847,11 @@ function renderAllEvents() {
 
     const statusColors = {'confirmed': 'green', 'quote-sent': 'yellow', 'in-progress': 'blue', 'completed': 'gray', 'lead': 'gray'};
     
-    container.innerHTML = FIRESTORE_DATA.events.map(event => `
+    // Separate active and completed events
+    const activeEvents = FIRESTORE_DATA.events.filter(e => e.status !== 'completed');
+    const archivedEvents = FIRESTORE_DATA.events.filter(e => e.status === 'completed');
+    
+    const renderEventCard = (event) => `
         <div class="event-card bg-white rounded-lg p-3 sm:p-4 border border-gray-200" style="border-left: 4px solid ${event.color}" onclick="viewEvent('${event.id}')">
             <div class="flex justify-between items-start mb-2">
                 <h3 class="font-semibold text-gray-900 text-sm">${event.name}</h3>
@@ -824,7 +866,30 @@ function renderAllEvents() {
                 <span class="font-semibold commotion-red">$${event.quoteAmount.toLocaleString()}</span>
             </div>
         </div>
-    `).join('');
+    `;
+    
+    container.innerHTML = `
+        ${activeEvents.map(renderEventCard).join('')}
+        ${archivedEvents.length > 0 ? `
+            <div class="border-t border-gray-200 mt-4 pt-4">
+                <button onclick="event.stopPropagation(); toggleArchivedEvents()" class="flex items-center justify-between w-full text-sm text-gray-600 hover:text-gray-900">
+                    <span><i class="fas fa-archive mr-2"></i>Archived Events (${archivedEvents.length})</span>
+                    <i class="fas fa-chevron-down" id="archivedIcon"></i>
+                </button>
+                <div id="archivedEventsContainer" class="hidden mt-3 space-y-3 opacity-60">
+                    ${archivedEvents.map(renderEventCard).join('')}
+                </div>
+            </div>
+        ` : ''}
+    `;
+}
+
+function toggleArchivedEvents() {
+    const container = document.getElementById('archivedEventsContainer');
+    const icon = document.getElementById('archivedIcon');
+    container.classList.toggle('hidden');
+    icon.classList.toggle('fa-chevron-down');
+    icon.classList.toggle('fa-chevron-up');
 }
 
 // Modal Functions
@@ -1116,7 +1181,7 @@ function renderAddGearModal() {
 
 function renderScheduleModal(event) {
     if (!event) return '<div class="p-6"><p>Event not found</p></div>';
-    const isClient = userRole === 'client';
+    const canEdit = userRole === 'admin' || userRole === 'client';
     
     return `
         <div class="p-6">
@@ -1131,21 +1196,21 @@ function renderScheduleModal(event) {
                             <h3 class="font-bold text-gray-900 mb-3 pb-2 border-b">${day.title} <span class="text-sm font-normal text-gray-500">${new Date(day.date).toLocaleDateString('en-NZ', {weekday: 'short', month: 'short', day: 'numeric'})}</span></h3>
                             <div class="space-y-2">
                                 ${day.items.map(item => `
-                                    <div class="flex items-start p-3 bg-gray-50 rounded-lg ${isClient ? 'cursor-pointer hover:bg-gray-100' : ''}" ${isClient ? `onclick="editScheduleItem('${event.id}', '${day.date}', '${item.time}')"` : ''}>
+                                    <div class="flex items-start p-3 bg-gray-50 rounded-lg ${canEdit ? 'cursor-pointer hover:bg-gray-100' : ''}" ${canEdit ? `onclick="editScheduleItem('${event.id}', '${day.date}', '${item.time}')"` : ''}>
                                         <span class="text-sm font-semibold commotion-red w-14 flex-shrink-0">${item.time}</span>
                                         <div class="flex-1">
                                             <p class="text-sm font-medium text-gray-900">${item.activity}</p>
                                             ${item.crew && item.crew.length > 0 ? `<p class="text-xs text-gray-500 mt-1"><i class="fas fa-users mr-1"></i>${item.crew.map(c => FIRESTORE_DATA.crew.find(cr => cr.id === c)?.name || c).join(', ')}</p>` : ''}
                                         </div>
-                                        ${isClient ? '<i class="fas fa-edit text-gray-400 ml-2"></i>' : ''}
+                                        ${canEdit ? '<i class="fas fa-edit text-gray-400 ml-2"></i>' : ''}
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
                     `).join('')}
                 </div>
-                ${isClient ? `<button class="w-full mt-6 px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-red-500 hover:text-red-600"><i class="fas fa-plus mr-2"></i>Add Schedule Item</button>` : ''}
-            ` : `<div class="text-center py-8 text-gray-500"><i class="fas fa-calendar-times text-4xl mb-3"></i><p>No schedule set up yet</p>${isClient ? `<button class="mt-4 px-4 py-2 bg-commotion-red text-white rounded-lg">Create Schedule</button>` : ''}</div>`}
+                ${canEdit ? `<button onclick="addScheduleItemFromModal('${event.id}')" class="w-full mt-6 px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-red-500 hover:text-red-600"><i class="fas fa-plus mr-2"></i>Add Schedule Item</button>` : ''}
+            ` : `<div class="text-center py-8 text-gray-500"><i class="fas fa-calendar-times text-4xl mb-3"></i><p>No schedule set up yet</p>${canEdit ? `<button onclick="addScheduleItemFromModal('${event.id}')" class="mt-4 px-4 py-2 bg-commotion-red text-white rounded-lg">Create Schedule</button>` : ''}</div>`}
         </div>
     `;
 }
@@ -1581,6 +1646,23 @@ function editCrew(crewMemberId) {
                     <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input type="email" id="editCrewEmail" value="${crew.email}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
                 </div>
+                
+                <!-- Account Settings Section -->
+                <div class="border-t pt-4 mt-4">
+                    <h3 class="font-semibold text-gray-900 mb-3"><i class="fas fa-key mr-2"></i>Account Settings</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                            <input type="text" id="editCrewUsername" value="${crew.username || ''}" placeholder="e.g. sam" class="w-full px-3 py-2 border border-gray-300 rounded-lg" pattern="[a-z0-9]+" title="Lowercase letters and numbers only">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                            <input type="password" id="editCrewPassword" placeholder="Leave blank to keep current" class="w-full px-3 py-2 border border-gray-300 rounded-lg" minlength="6">
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Note: Password changes require Firebase Admin SDK. Username can be updated.</p>
+                </div>
+                
                 <div class="flex gap-3 pt-4">
                     <button type="submit" id="saveCrewBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
                     <button type="button" onclick="closeModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
@@ -1598,14 +1680,33 @@ async function handleEditCrew(e, crewMemberId) {
     btn.disabled = true;
     btn.textContent = 'Saving...';
     
+    const crew = FIRESTORE_DATA.crew.find(c => c.id === crewMemberId);
+    const newUsername = document.getElementById('editCrewUsername').value.toLowerCase();
+    const oldUsername = crew.username;
+    
     const updates = {
         name: document.getElementById('editCrewName').value,
         role: document.getElementById('editCrewRole').value,
         rate: parseInt(document.getElementById('editCrewRate').value),
         available: document.getElementById('editCrewAvailable').value === 'true',
         phone: document.getElementById('editCrewPhone').value,
-        email: document.getElementById('editCrewEmail').value
+        email: document.getElementById('editCrewEmail').value,
+        username: newUsername
     };
+    
+    // Update username mapping if changed
+    if (newUsername && newUsername !== oldUsername) {
+        // Remove old username mapping
+        if (oldUsername) {
+            await firestoreHelpers.deleteDoc('usernames', oldUsername);
+        }
+        // Add new username mapping
+        await firestoreHelpers.setDoc('usernames', newUsername, {
+            email: updates.email,
+            crewId: crewMemberId,
+            createdAt: new Date().toISOString()
+        }, false);
+    }
     
     const result = await firestoreHelpers.updateDoc('crew', crewMemberId, updates);
     
@@ -1621,8 +1722,225 @@ async function handleEditCrew(e, crewMemberId) {
 }
 
 function editScheduleItem(eventId, date, time) {
-    // Redirect to event detail page for schedule editing
-    window.location.href = `event-detail.html?id=${eventId}`;
+    const event = FIRESTORE_DATA.events.find(e => e.id === eventId);
+    if (!event || !event.schedule) return;
+    
+    const day = event.schedule.find(d => d.date === date);
+    if (!day) return;
+    
+    const item = day.items.find(i => i.time === time);
+    if (!item) return;
+    
+    const modal = document.getElementById('modal');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-edit mr-2 commotion-red"></i>Edit Schedule Item</h2>
+                <button onclick="showModal('editSchedule', '${eventId}')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form onsubmit="handleEditScheduleItem(event, '${eventId}', '${date}', '${time}')" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" id="editItemDate" value="${date}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                        <input type="time" id="editItemTime" value="${time}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Activity</label>
+                    <input type="text" id="editItemActivity" value="${item.activity}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Assigned Crew</label>
+                    <div class="space-y-2 max-h-32 overflow-y-auto">
+                        ${FIRESTORE_DATA.crew.map(c => `
+                            <label class="flex items-center p-2 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                                <input type="checkbox" name="editItemCrew" value="${c.id}" ${item.crew && item.crew.includes(c.id) ? 'checked' : ''} class="mr-3">
+                                <span class="text-sm">${c.name}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" id="editItemBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
+                    <button type="button" onclick="deleteScheduleItem('${eventId}', '${date}', '${time}')" class="px-4 py-3 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-semibold">Delete</button>
+                    <button type="button" onclick="showModal('editSchedule', '${eventId}')" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+async function handleEditScheduleItem(e, eventId, oldDate, oldTime) {
+    e.preventDefault();
+    const btn = document.getElementById('editItemBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    
+    const newDate = document.getElementById('editItemDate').value;
+    const newTime = document.getElementById('editItemTime').value;
+    const activity = document.getElementById('editItemActivity').value;
+    const crewCheckboxes = document.querySelectorAll('input[name="editItemCrew"]:checked');
+    const crew = Array.from(crewCheckboxes).map(cb => cb.value);
+    
+    const event = FIRESTORE_DATA.events.find(ev => ev.id === eventId);
+    let schedule = [...event.schedule];
+    
+    // Remove from old day
+    const oldDayIndex = schedule.findIndex(d => d.date === oldDate);
+    if (oldDayIndex !== -1) {
+        schedule[oldDayIndex].items = schedule[oldDayIndex].items.filter(i => i.time !== oldTime);
+        if (schedule[oldDayIndex].items.length === 0) {
+            schedule.splice(oldDayIndex, 1);
+        }
+    }
+    
+    // Add to new day
+    let newDayIndex = schedule.findIndex(d => d.date === newDate);
+    if (newDayIndex === -1) {
+        schedule.push({
+            date: newDate,
+            title: new Date(newDate).toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long' }),
+            items: []
+        });
+        schedule.sort((a, b) => new Date(a.date) - new Date(b.date));
+        newDayIndex = schedule.findIndex(d => d.date === newDate);
+    }
+    
+    schedule[newDayIndex].items.push({ time: newTime, activity, crew });
+    schedule[newDayIndex].items.sort((a, b) => a.time.localeCompare(b.time));
+    
+    const result = await firestoreHelpers.updateDoc('events', eventId, { schedule });
+    
+    if (result.success) {
+        await loadFirestoreData();
+        showModal('editSchedule', eventId);
+    } else {
+        alert('Error: ' + result.error);
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+    }
+}
+
+async function deleteScheduleItem(eventId, date, time) {
+    if (!confirm('Delete this schedule item?')) return;
+    
+    const event = FIRESTORE_DATA.events.find(ev => ev.id === eventId);
+    let schedule = [...event.schedule];
+    
+    const dayIndex = schedule.findIndex(d => d.date === date);
+    if (dayIndex !== -1) {
+        schedule[dayIndex].items = schedule[dayIndex].items.filter(i => i.time !== time);
+        if (schedule[dayIndex].items.length === 0) {
+            schedule.splice(dayIndex, 1);
+        }
+    }
+    
+    const result = await firestoreHelpers.updateDoc('events', eventId, { schedule });
+    
+    if (result.success) {
+        await loadFirestoreData();
+        showModal('editSchedule', eventId);
+    } else {
+        alert('Error: ' + result.error);
+    }
+}
+
+function addScheduleItemFromModal(eventId) {
+    const event = FIRESTORE_DATA.events.find(e => e.id === eventId);
+    const defaultDate = event.startDate || new Date().toISOString().split('T')[0];
+    
+    const modal = document.getElementById('modal');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-plus mr-2 commotion-red"></i>Add Schedule Item</h2>
+                <button onclick="showModal('editSchedule', '${eventId}')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form onsubmit="handleAddScheduleItem(event, '${eventId}')" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" id="newItemDate" value="${defaultDate}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                        <input type="time" id="newItemTime" value="09:00" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Activity</label>
+                    <input type="text" id="newItemActivity" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Setup, Filming, Pack down...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Assigned Crew</label>
+                    <div class="space-y-2 max-h-32 overflow-y-auto">
+                        ${FIRESTORE_DATA.crew.map(c => `
+                            <label class="flex items-center p-2 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                                <input type="checkbox" name="newItemCrew" value="${c.id}" class="mr-3">
+                                <span class="text-sm">${c.name}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" id="addItemBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Add Item</button>
+                    <button type="button" onclick="showModal('editSchedule', '${eventId}')" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+async function handleAddScheduleItem(e, eventId) {
+    e.preventDefault();
+    const btn = document.getElementById('addItemBtn');
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
+    
+    const date = document.getElementById('newItemDate').value;
+    const time = document.getElementById('newItemTime').value;
+    const activity = document.getElementById('newItemActivity').value;
+    const crewCheckboxes = document.querySelectorAll('input[name="newItemCrew"]:checked');
+    const crew = Array.from(crewCheckboxes).map(cb => cb.value);
+    
+    const event = FIRESTORE_DATA.events.find(ev => ev.id === eventId);
+    let schedule = event.schedule ? [...event.schedule] : [];
+    
+    let dayIndex = schedule.findIndex(d => d.date === date);
+    if (dayIndex === -1) {
+        schedule.push({
+            date: date,
+            title: new Date(date).toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long' }),
+            items: []
+        });
+        schedule.sort((a, b) => new Date(a.date) - new Date(b.date));
+        dayIndex = schedule.findIndex(d => d.date === date);
+    }
+    
+    schedule[dayIndex].items.push({ time, activity, crew });
+    schedule[dayIndex].items.sort((a, b) => a.time.localeCompare(b.time));
+    
+    const result = await firestoreHelpers.updateDoc('events', eventId, { schedule });
+    
+    if (result.success) {
+        await loadFirestoreData();
+        showModal('editSchedule', eventId);
+    } else {
+        alert('Error: ' + result.error);
+        btn.disabled = false;
+        btn.textContent = 'Add Item';
+    }
 }
 
 function showExpandedCalendar() {
@@ -1796,22 +2114,26 @@ function showCrewPaymentModal(crewId) {
     const crew = FIRESTORE_DATA.crew.find(c => c.id === crewId);
     if (!crew) return;
     
-    // Calculate what they're owed
+    // Calculate what they're owed per event
     let eventDetails = [];
+    const eventPayments = crew.eventPayments || {};
+    
     FIRESTORE_DATA.events.forEach(event => {
         if (event.crewAssigned && event.crewAssigned.includes(crewId)) {
             const days = Math.ceil((new Date(event.endDate) - new Date(event.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+            const isPaid = eventPayments[event.id] === true;
             eventDetails.push({
+                id: event.id,
                 name: event.name,
                 days: days,
                 amount: crew.rate * days,
-                date: event.startDate
+                isPaid: isPaid
             });
         }
     });
     
     const totalOwed = eventDetails.reduce((sum, e) => sum + e.amount, 0);
-    const totalPaid = crew.paidAmount || 0;
+    const totalPaid = eventDetails.filter(e => e.isPaid).reduce((sum, e) => sum + e.amount, 0);
     
     const modal = document.getElementById('modal');
     const content = document.getElementById('modalContent');
@@ -1834,63 +2156,90 @@ function showCrewPaymentModal(crewId) {
                 <p class="text-2xl font-bold ${totalOwed - totalPaid > 0 ? 'commotion-red' : 'text-green-600'}">$${(totalOwed - totalPaid).toLocaleString()}</p>
             </div>
             
-            <h3 class="font-semibold text-gray-900 mb-3">Event Breakdown</h3>
-            <div class="space-y-2 max-h-32 overflow-y-auto mb-6">
+            <h3 class="font-semibold text-gray-900 mb-3">Event Payment Status</h3>
+            <div class="space-y-2 max-h-64 overflow-y-auto">
                 ${eventDetails.map(e => `
-                    <div class="flex justify-between p-2 bg-gray-50 rounded">
-                        <span class="text-sm">${e.name} (${e.days} days)</span>
-                        <span class="text-sm font-semibold">$${e.amount.toLocaleString()}</span>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-semibold">${e.name}</p>
+                            <p class="text-xs text-gray-500">${e.days} days × $${crew.rate}/day</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold">$${e.amount.toLocaleString()}</span>
+                            <button onclick="toggleAdminCrewPayment('${crewId}', '${e.id}', ${!e.isPaid})" class="px-3 py-1 rounded-full text-xs font-semibold ${e.isPaid ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}">
+                                <i class="fas ${e.isPaid ? 'fa-check-circle' : 'fa-circle'} mr-1"></i>${e.isPaid ? 'Paid' : 'Mark Paid'}
+                            </button>
+                        </div>
                     </div>
                 `).join('')}
             </div>
             
-            <form onsubmit="handleCrewPayment(event, '${crewId}')" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Record Payment</label>
-                    <div class="flex gap-2">
-                        <input type="number" id="paymentAmount" value="${totalOwed - totalPaid}" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" placeholder="Amount">
-                        <button type="submit" id="recordPaymentBtn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold">Record</button>
-                    </div>
-                </div>
-                <div class="flex gap-3">
-                    <button type="button" onclick="resetCrewPayment('${crewId}')" class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm">Reset to $0</button>
-                    <button type="button" onclick="markFullyPaid('${crewId}', ${totalOwed})" class="flex-1 px-4 py-2 bg-commotion-red hover-commotion-red text-white rounded-lg text-sm">Mark Fully Paid</button>
-                </div>
-            </form>
+            <div class="flex gap-3 mt-6">
+                <button onclick="markAllEventsPaid('${crewId}')" class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold">Mark All Paid</button>
+                <button onclick="resetAllEventPayments('${crewId}')" class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-semibold">Reset All</button>
+            </div>
         </div>
     `;
 }
 
-async function handleCrewPayment(e, crewId) {
-    e.preventDefault();
-    const btn = document.getElementById('recordPaymentBtn');
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
-    
+async function toggleAdminCrewPayment(crewId, eventId, isPaid) {
     const crew = FIRESTORE_DATA.crew.find(c => c.id === crewId);
-    const amount = parseInt(document.getElementById('paymentAmount').value);
-    const newTotal = (crew.paidAmount || 0) + amount;
+    if (!crew) return;
     
-    const result = await firestoreHelpers.updateDoc('crew', crewId, { paidAmount: newTotal });
+    const eventPayments = crew.eventPayments || {};
+    eventPayments[eventId] = isPaid;
     
-    if (result.success) {
-        await loadFirestoreData();
-        showCrewPaymentModal(crewId);
-    } else {
-        alert('Error: ' + result.error);
-        btn.disabled = false;
-        btn.textContent = 'Record';
+    // Recalculate total paid
+    let totalPaid = 0;
+    for (const [evtId, paid] of Object.entries(eventPayments)) {
+        if (paid) {
+            const evt = FIRESTORE_DATA.events.find(e => e.id === evtId);
+            if (evt && evt.crewAssigned && evt.crewAssigned.includes(crewId)) {
+                const days = Math.ceil((new Date(evt.endDate) - new Date(evt.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+                totalPaid += crew.rate * days;
+            }
+        }
     }
-}
-
-async function resetCrewPayment(crewId) {
-    await firestoreHelpers.updateDoc('crew', crewId, { paidAmount: 0 });
+    
+    await firestoreHelpers.updateDoc('crew', crewId, { 
+        eventPayments: eventPayments,
+        paidAmount: totalPaid
+    });
+    
     await loadFirestoreData();
     showCrewPaymentModal(crewId);
 }
 
-async function markFullyPaid(crewId, amount) {
-    await firestoreHelpers.updateDoc('crew', crewId, { paidAmount: amount });
+async function markAllEventsPaid(crewId) {
+    const crew = FIRESTORE_DATA.crew.find(c => c.id === crewId);
+    if (!crew) return;
+    
+    const eventPayments = crew.eventPayments || {};
+    let totalPaid = 0;
+    
+    FIRESTORE_DATA.events.forEach(event => {
+        if (event.crewAssigned && event.crewAssigned.includes(crewId)) {
+            eventPayments[event.id] = true;
+            const days = Math.ceil((new Date(event.endDate) - new Date(event.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+            totalPaid += crew.rate * days;
+        }
+    });
+    
+    await firestoreHelpers.updateDoc('crew', crewId, { 
+        eventPayments: eventPayments,
+        paidAmount: totalPaid
+    });
+    
+    await loadFirestoreData();
+    showCrewPaymentModal(crewId);
+}
+
+async function resetAllEventPayments(crewId) {
+    await firestoreHelpers.updateDoc('crew', crewId, { 
+        eventPayments: {},
+        paidAmount: 0
+    });
+    
     await loadFirestoreData();
     showCrewPaymentModal(crewId);
 }
@@ -1959,6 +2308,17 @@ function editClient(clientId) {
                 <div><label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label><input type="text" id="editClientContact" value="${client.contact}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
                 <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="editClientEmail" value="${client.email}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
                 <div><label class="block text-sm font-medium text-gray-700 mb-1">Phone</label><input type="tel" id="editClientPhone" value="${client.phone}" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                
+                <!-- Account Settings Section -->
+                <div class="border-t pt-4 mt-4">
+                    <h3 class="font-semibold text-gray-900 mb-3"><i class="fas fa-key mr-2"></i>Account Settings</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <input type="text" id="editClientUsername" value="${client.username || ''}" placeholder="e.g. ethan" class="w-full px-3 py-2 border border-gray-300 rounded-lg" pattern="[a-z0-9]+" title="Lowercase letters and numbers only">
+                        <p class="text-xs text-gray-500 mt-1">Username for login (instead of email)</p>
+                    </div>
+                </div>
+                
                 <div class="flex gap-3 pt-4">
                     <button type="submit" id="saveClientBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
                     <button type="button" onclick="deleteClient('${client.id}')" class="px-4 py-3 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-semibold">Delete</button>
@@ -1975,12 +2335,31 @@ async function handleEditClient(e, clientId) {
     btn.disabled = true;
     btn.textContent = 'Saving...';
     
+    const client = FIRESTORE_DATA.clients.find(c => c.id === clientId);
+    const newUsername = document.getElementById('editClientUsername').value.toLowerCase();
+    const oldUsername = client.username;
+    
     const updates = {
         company: document.getElementById('editClientCompany').value,
         contact: document.getElementById('editClientContact').value,
         email: document.getElementById('editClientEmail').value,
-        phone: document.getElementById('editClientPhone').value
+        phone: document.getElementById('editClientPhone').value,
+        username: newUsername
     };
+    
+    // Update username mapping if changed
+    if (newUsername && newUsername !== oldUsername) {
+        // Remove old username mapping
+        if (oldUsername) {
+            await firestoreHelpers.deleteDoc('usernames', oldUsername);
+        }
+        // Add new username mapping
+        await firestoreHelpers.setDoc('usernames', newUsername, {
+            email: updates.email,
+            clientId: clientId,
+            createdAt: new Date().toISOString()
+        }, false);
+    }
     
     const result = await firestoreHelpers.updateDoc('clients', clientId, updates);
     
@@ -2220,6 +2599,30 @@ async function changeCrewPassword() {
         }
         btn.disabled = false;
         btn.textContent = 'Update Password';
+    }
+}
+
+async function saveClientProfile() {
+    const btn = document.getElementById('saveClientProfileBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    
+    const updates = {
+        company: document.getElementById('clientCompany').value,
+        contact: document.getElementById('clientContact').value,
+        phone: document.getElementById('clientPhone').value
+    };
+    
+    const result = await firestoreHelpers.updateDoc('clients', clientId, updates);
+    
+    if (result.success) {
+        btn.textContent = 'Saved!';
+        await loadFirestoreData();
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'Save Profile'; }, 1500);
+    } else {
+        alert('Error: ' + result.error);
+        btn.disabled = false;
+        btn.textContent = 'Save Profile';
     }
 }
 
