@@ -21,18 +21,12 @@
             font-weight: 900;
             letter-spacing: -0.02em;
             color: #b93a3a;
-            word-break: keep-all;
-            white-space: nowrap;
         }
         
         input:focus {
             outline: none;
             border-color: #b93a3a;
             box-shadow: 0 0 0 4px rgba(185, 58, 58, 0.08);
-        }
-        
-        input::placeholder {
-            color: #9ca3af;
         }
         
         .login-btn {
@@ -45,19 +39,14 @@
             transform: translateY(-2px);
             box-shadow: 0 12px 28px rgba(185, 58, 58, 0.35);
         }
-        
-        .login-btn:active {
-            transform: translateY(0);
-            box-shadow: 0 6px 16px rgba(185, 58, 58, 0.25);
-        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
     
-    <div class="w-full max-w-md">
-        <!-- Logo/Header -->
-        <div class="text-center mb-12">
-            <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl logo-text mb-8">COMMOTION.APP</h1>
+    <div class="w-full max-w-sm mx-auto">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <h1 class="text-2xl sm:text-3xl logo-text">COMMOTION.APP</h1>
         </div>
 
         <!-- Error Message -->
@@ -69,9 +58,9 @@
         </div>
 
         <!-- Login Form -->
-        <form onsubmit="handleLogin(event)" class="space-y-5">
-            <div class="space-y-2">
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Username</label>
+        <form onsubmit="handleLogin(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Username</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="fas fa-user text-gray-400"></i>
@@ -80,15 +69,15 @@
                         type="text" 
                         id="username" 
                         required
-                        class="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl transition-all focus:bg-white focus:ring-2 focus:ring-red-100 text-gray-900 placeholder-gray-400"
+                        class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900"
                         placeholder="Enter username"
                         autocomplete="username"
                     >
                 </div>
             </div>
 
-            <div class="space-y-2">
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Password</label>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Password</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="fas fa-lock text-gray-400"></i>
@@ -97,14 +86,14 @@
                         type="password" 
                         id="password" 
                         required
-                        class="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl transition-all focus:bg-white focus:ring-2 focus:ring-red-100 text-gray-900 placeholder-gray-400"
+                        class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900"
                         placeholder="Enter password"
                         autocomplete="current-password"
                     >
                 </div>
             </div>
 
-            <button type="submit" class="login-btn w-full text-white rounded-xl py-4 px-6 font-bold text-base tracking-wide shadow-lg mt-6">
+            <button type="submit" class="login-btn w-full text-white rounded-xl py-3 px-6 font-bold text-base shadow-lg mt-2">
                 SIGN IN
             </button>
         </form>
@@ -130,7 +119,6 @@
     </div>
 
     <script>
-        // User credentials database
         const USERS = {
             'jemag': {
                 password: 'cheeseburger',
@@ -150,7 +138,7 @@
                 role: 'crew',
                 fullName: 'Sam King',
                 userId: 'user-crew-001',
-                crewId: 'crew-001'
+                crewId: 'crew-sam'
             }
         };
 
@@ -162,7 +150,6 @@
             const errorMessage = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
             
-            // Check if user exists and password matches
             const user = USERS[username];
             
             if (!user) {
@@ -177,20 +164,14 @@
                 return;
             }
             
-            // Successful login - store user data
             localStorage.setItem('userRole', user.role);
             localStorage.setItem('userName', user.fullName);
             localStorage.setItem('userId', user.userId);
             localStorage.setItem('username', username);
             
-            if (user.clientId) {
-                localStorage.setItem('clientId', user.clientId);
-            }
-            if (user.crewId) {
-                localStorage.setItem('crewId', user.crewId);
-            }
+            if (user.clientId) localStorage.setItem('clientId', user.clientId);
+            if (user.crewId) localStorage.setItem('crewId', user.crewId);
             
-            // Redirect to dashboard
             window.location.href = 'dashboard.html';
         }
     </script>

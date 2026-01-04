@@ -3,35 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Details - EventCrew Pro</title>
+    <title>Event Details - COMMOTION.APP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-        .tab-button.active { border-bottom: 2px solid #7c3aed; color: #7c3aed; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { overflow-x: hidden; max-width: 100vw; }
+        
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .commotion-red { color: #b93a3a; }
+        .bg-commotion-red { background-color: #b93a3a; }
+        .hover-commotion-red:hover { background-color: #a02e2e; }
+        .border-commotion-red { border-color: #b93a3a; }
+        .logo-text { font-weight: 900; letter-spacing: -0.02em; }
+        
+        .tab-button { border-bottom: 2px solid transparent; }
+        .tab-button.active { border-bottom-color: #b93a3a; color: #b93a3a; }
+        
         .progress-bar { transition: width 0.5s ease; }
         .crew-card { transition: all 0.2s; }
         .crew-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     </style>
 </head>
-<body class="bg-gray-50">
+<body>
 
     <!-- Navbar -->
     <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
-                    <button onclick="window.location.href='dashboard.html'" class="mr-4 text-gray-500 hover:text-gray-700">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-14 sm:h-16">
+                <div class="flex items-center min-w-0">
+                    <button onclick="window.location.href='dashboard.html'" class="mr-3 text-gray-500 hover:text-gray-700 p-2">
                         <i class="fas fa-arrow-left"></i>
                     </button>
-                    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-2 mr-3">
-                        <i class="fas fa-video text-white text-xl"></i>
-                    </div>
-                    <span class="text-xl font-bold text-gray-800">EventCrew Pro</span>
+                    <span class="text-lg sm:text-2xl logo-text commotion-red truncate">COMMOTION.APP</span>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <span class="text-sm text-gray-600" id="userName">Admin User</span>
-                    <button onclick="logout()" class="text-gray-500 hover:text-gray-700">
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                    <span class="text-xs sm:text-sm text-gray-600 hidden sm:inline" id="userName">User</span>
+                    <button onclick="logout()" class="text-gray-500 hover:text-gray-700 p-2">
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>
@@ -39,626 +53,321 @@
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         
         <!-- Event Header -->
-        <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-100">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+        <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6 border border-gray-100">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
                 <div>
-                    <div class="flex items-center mb-2">
-                        <h1 class="text-3xl font-bold text-gray-900" id="eventName">Hidden Lakes Festival 2025</h1>
-                        <span class="ml-4 px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700" id="eventStatus">
-                            Confirmed
-                        </span>
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <h1 class="text-xl sm:text-3xl font-bold text-gray-900" id="eventName">Loading...</h1>
+                        <span class="px-3 py-1 rounded-full text-xs sm:text-sm font-semibold" id="eventStatus">--</span>
                     </div>
-                    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
-                        <span><i class="fas fa-map-marker-alt text-purple-600 mr-2"></i><span id="eventLocation">Cooks Beach, Coromandel</span></span>
-                        <span><i class="fas fa-calendar text-purple-600 mr-2"></i><span id="eventDates">Feb 14-16, 2025</span></span>
-                        <span><i class="fas fa-users text-purple-600 mr-2"></i><span id="eventAttendees">5,000</span> attendees</span>
+                    <div class="flex flex-wrap gap-3 text-xs sm:text-sm text-gray-600">
+                        <span><i class="fas fa-map-marker-alt commotion-red mr-1"></i><span id="eventLocation">--</span></span>
+                        <span><i class="fas fa-calendar commotion-red mr-1"></i><span id="eventDates">--</span></span>
+                        <span><i class="fas fa-users commotion-red mr-1"></i><span id="eventAttendees">--</span> attendees</span>
                     </div>
                 </div>
-                <div class="mt-4 md:mt-0 flex space-x-2">
-                    <button class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
-                        <i class="fas fa-edit mr-2"></i>Edit Event
+                <div class="flex gap-2 w-full lg:w-auto">
+                    <button onclick="editEvent()" class="flex-1 lg:flex-none px-4 py-2 bg-commotion-red hover-commotion-red text-white rounded-lg text-sm font-semibold">
+                        <i class="fas fa-edit mr-2"></i>Edit
                     </button>
-                    <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                    <button onclick="exportEvent()" class="flex-1 lg:flex-none px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold">
                         <i class="fas fa-download mr-2"></i>Export
                     </button>
                 </div>
             </div>
 
             <!-- Quick Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <p class="text-2xl font-bold text-gray-900" id="budgetAmount">$12,500</p>
-                    <p class="text-xs text-gray-600 mt-1">Quote Amount</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                    <p class="text-lg sm:text-2xl font-bold text-gray-900" id="budgetAmount">$0</p>
+                    <p class="text-xs text-gray-600">Quote</p>
                 </div>
-                <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <p class="text-2xl font-bold text-green-600" id="paidAmount">$6,250</p>
-                    <p class="text-xs text-gray-600 mt-1">Paid (50%)</p>
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                    <p class="text-lg sm:text-2xl font-bold text-green-600" id="paidAmount">$0</p>
+                    <p class="text-xs text-gray-600">Paid</p>
                 </div>
-                <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <p class="text-2xl font-bold text-gray-900" id="crewCount">4</p>
-                    <p class="text-xs text-gray-600 mt-1">Crew Members</p>
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                    <p class="text-lg sm:text-2xl font-bold text-gray-900" id="crewCount">0</p>
+                    <p class="text-xs text-gray-600">Crew</p>
                 </div>
-                <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <p class="text-2xl font-bold text-gray-900" id="gearValue">$45,000</p>
-                    <p class="text-xs text-gray-600 mt-1">Gear Value</p>
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                    <p class="text-lg sm:text-2xl font-bold text-gray-900" id="gearValue">$0</p>
+                    <p class="text-xs text-gray-600">Gear Value</p>
                 </div>
             </div>
         </div>
 
         <!-- Tabs -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
-            <div class="border-b border-gray-200">
-                <div class="flex space-x-8 px-6">
-                    <button class="tab-button py-4 font-semibold active" onclick="switchTab('overview')">
-                        Overview
-                    </button>
-                    <button class="tab-button py-4 font-semibold text-gray-500" onclick="switchTab('crew')">
-                        Crew & Roles
-                    </button>
-                    <button class="tab-button py-4 font-semibold text-gray-500" onclick="switchTab('tasks')">
-                        Tasks
-                    </button>
-                    <button class="tab-button py-4 font-semibold text-gray-500" onclick="switchTab('deliverables')">
-                        Deliverables
-                    </button>
-                    <button class="tab-button py-4 font-semibold text-gray-500" onclick="switchTab('gear')">
-                        Gear
-                    </button>
+            <div class="border-b border-gray-200 overflow-x-auto">
+                <div class="flex px-4 sm:px-6 min-w-max">
+                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm active" onclick="switchTab('overview')">Overview</button>
+                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('schedule')">Schedule</button>
+                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('crew')">Crew</button>
+                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('deliverables')">Deliverables</button>
+                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('gear')">Gear</button>
                 </div>
             </div>
 
-            <!-- Tab Content -->
-            <div class="p-6">
-                
-                <!-- Overview Tab -->
-                <div id="overviewTab" class="tab-content">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        
-                        <!-- Client Information -->
-                        <div class="bg-gray-50 rounded-lg p-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">
-                                <i class="fas fa-building text-purple-600 mr-2"></i>
-                                Client Information
-                            </h3>
-                            <div class="space-y-3 text-sm">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Company:</span>
-                                    <span class="font-semibold text-gray-900">Hidden Lakes Events Ltd</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Contact:</span>
-                                    <span class="font-semibold text-gray-900">Sarah Johnson</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Email:</span>
-                                    <span class="text-blue-600">sarah@hiddenlakes.co.nz</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Phone:</span>
-                                    <span class="text-gray-900">+64 21 987 6543</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Financial Overview -->
-                        <div class="bg-gray-50 rounded-lg p-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">
-                                <i class="fas fa-dollar-sign text-green-600 mr-2"></i>
-                                Financial Overview
-                            </h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <div class="flex justify-between text-sm mb-2">
-                                        <span class="text-gray-600">Payment Progress</span>
-                                        <span class="font-semibold">50%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="progress-bar bg-green-500 h-2 rounded-full" style="width: 50%"></div>
-                                    </div>
-                                </div>
-                                <div class="space-y-2 text-sm">
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Quote Amount:</span>
-                                        <span class="font-semibold">$12,500</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Paid:</span>
-                                        <span class="text-green-600 font-semibold">$6,250</span>
-                                    </div>
-                                    <div class="flex justify-between border-t pt-2">
-                                        <span class="text-gray-900 font-semibold">Remaining:</span>
-                                        <span class="font-bold text-gray-900">$6,250</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Event Notes -->
-                        <div class="lg:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-3">
-                                <i class="fas fa-sticky-note text-blue-600 mr-2"></i>
-                                Event Notes
-                            </h3>
-                            <p class="text-sm text-gray-700">
-                                Three-day boutique festival. Main stage coverage priority. VIP area requires special access passes. 
-                                Stage setup Friday 6pm. Weather contingency plan in place. Client prefers daily rushes delivered via Dropbox.
-                            </p>
-                        </div>
-
-                        <!-- Timeline -->
-                        <div class="lg:col-span-2 bg-gray-50 rounded-lg p-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">
-                                <i class="fas fa-history text-purple-600 mr-2"></i>
-                                Timeline
-                            </h3>
-                            <div class="space-y-4">
-                                <div class="flex items-start">
-                                    <div class="bg-green-500 rounded-full p-2 mr-4">
-                                        <i class="fas fa-check text-white text-xs"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-semibold text-sm text-gray-900">Deposit Received</p>
-                                        <p class="text-xs text-gray-500">Jan 15, 2025</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div class="bg-green-500 rounded-full p-2 mr-4">
-                                        <i class="fas fa-check text-white text-xs"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-semibold text-sm text-gray-900">Crew Confirmed</p>
-                                        <p class="text-xs text-gray-500">Jan 20, 2025</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div class="bg-blue-500 rounded-full p-2 mr-4">
-                                        <i class="fas fa-circle text-white text-xs"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-semibold text-sm text-gray-900">Event Day 1</p>
-                                        <p class="text-xs text-gray-500">Feb 14, 2025</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div class="bg-gray-300 rounded-full p-2 mr-4">
-                                        <i class="fas fa-circle text-white text-xs"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-semibold text-sm text-gray-900">First Deliverable Due</p>
-                                        <p class="text-xs text-gray-500">Feb 20, 2025</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Crew Tab -->
-                <div id="crewTab" class="tab-content hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="crew-card bg-white border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center">
-                                    <div class="bg-purple-100 rounded-full w-12 h-12 flex items-center justify-center mr-3">
-                                        <span class="text-lg font-bold text-purple-600">MT</span>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-semibold text-gray-900">Mike Thompson</h4>
-                                        <p class="text-sm text-gray-600">Lead Videographer</p>
-                                    </div>
-                                </div>
-                                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Confirmed</span>
-                            </div>
-                            <div class="text-sm text-gray-600 space-y-1">
-                                <div><i class="fas fa-phone text-gray-400 w-4"></i> +64 21 111 2222</div>
-                                <div><i class="fas fa-envelope text-gray-400 w-4"></i> mike@example.com</div>
-                                <div><i class="fas fa-dollar-sign text-gray-400 w-4"></i> $450/day × 3 days = <span class="font-semibold">$1,350</span></div>
-                            </div>
-                            <div class="mt-3 pt-3 border-t border-gray-200">
-                                <p class="text-xs text-gray-500">Skills: Camera Op, Directing, Gimbal</p>
-                            </div>
-                        </div>
-
-                        <div class="crew-card bg-white border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center">
-                                    <div class="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mr-3">
-                                        <span class="text-lg font-bold text-blue-600">SC</span>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-semibold text-gray-900">Sarah Chen</h4>
-                                        <p class="text-sm text-gray-600">Drone Operator</p>
-                                    </div>
-                                </div>
-                                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Confirmed</span>
-                            </div>
-                            <div class="text-sm text-gray-600 space-y-1">
-                                <div><i class="fas fa-phone text-gray-400 w-4"></i> +64 27 222 3333</div>
-                                <div><i class="fas fa-envelope text-gray-400 w-4"></i> sarah@example.com</div>
-                                <div><i class="fas fa-dollar-sign text-gray-400 w-4"></i> $380/day × 3 days = <span class="font-semibold">$1,140</span></div>
-                            </div>
-                            <div class="mt-3 pt-3 border-t border-gray-200">
-                                <p class="text-xs text-gray-500">Skills: Drone, Aerial, Part 102 Certified</p>
-                            </div>
-                        </div>
-
-                        <div class="crew-card bg-white border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center">
-                                    <div class="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mr-3">
-                                        <span class="text-lg font-bold text-green-600">EB</span>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-semibold text-gray-900">Emily Brown</h4>
-                                        <p class="text-sm text-gray-600">Sound Recordist</p>
-                                    </div>
-                                </div>
-                                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Confirmed</span>
-                            </div>
-                            <div class="text-sm text-gray-600 space-y-1">
-                                <div><i class="fas fa-phone text-gray-400 w-4"></i> +64 27 444 5555</div>
-                                <div><i class="fas fa-envelope text-gray-400 w-4"></i> emily@example.com</div>
-                                <div><i class="fas fa-dollar-sign text-gray-400 w-4"></i> $320/day × 3 days = <span class="font-semibold">$960</span></div>
-                            </div>
-                            <div class="mt-3 pt-3 border-t border-gray-200">
-                                <p class="text-xs text-gray-500">Skills: Audio, Field Recording, Mixing</p>
-                            </div>
-                        </div>
-
-                        <div class="crew-card bg-white border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center">
-                                    <div class="bg-orange-100 rounded-full w-12 h-12 flex items-center justify-center mr-3">
-                                        <span class="text-lg font-bold text-orange-600">TA</span>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-semibold text-gray-900">Tom Anderson</h4>
-                                        <p class="text-sm text-gray-600">Gimbal Operator</p>
-                                    </div>
-                                </div>
-                                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Confirmed</span>
-                            </div>
-                            <div class="text-sm text-gray-600 space-y-1">
-                                <div><i class="fas fa-phone text-gray-400 w-4"></i> +64 21 555 6666</div>
-                                <div><i class="fas fa-envelope text-gray-400 w-4"></i> tom@example.com</div>
-                                <div><i class="fas fa-dollar-sign text-gray-400 w-4"></i> $340/day × 3 days = <span class="font-semibold">$1,020</span></div>
-                            </div>
-                            <div class="mt-3 pt-3 border-t border-gray-200">
-                                <p class="text-xs text-gray-500">Skills: Gimbal, Stabilization, Tracking</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                        <div class="flex justify-between items-center">
-                            <span class="text-lg font-bold text-gray-900">Total Crew Cost:</span>
-                            <span class="text-2xl font-bold text-purple-600">$4,470</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tasks Tab -->
-                <div id="tasksTab" class="tab-content hidden">
-                    <div class="space-y-4">
-                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center">
-                                    <input type="checkbox" checked class="mr-3 w-5 h-5">
-                                    <h4 class="font-semibold text-gray-900">Site recce at Cooks Beach</h4>
-                                </div>
-                                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">DONE</span>
-                            </div>
-                            <div class="ml-8 text-sm text-gray-600">
-                                <p><i class="fas fa-user text-gray-400 mr-2"></i>Assigned to: Mike Thompson</p>
-                                <p><i class="fas fa-calendar text-gray-400 mr-2"></i>Due: Feb 10, 2025</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center">
-                                    <input type="checkbox" checked class="mr-3 w-5 h-5">
-                                    <h4 class="font-semibold text-gray-900">Confirm stage access passes</h4>
-                                </div>
-                                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">DONE</span>
-                            </div>
-                            <div class="ml-8 text-sm text-gray-600">
-                                <p><i class="fas fa-user text-gray-400 mr-2"></i>Assigned to: Rachel Green</p>
-                                <p><i class="fas fa-calendar text-gray-400 mr-2"></i>Due: Feb 12, 2025</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center">
-                                    <input type="checkbox" class="mr-3 w-5 h-5">
-                                    <h4 class="font-semibold text-gray-900">Test drone flight permissions</h4>
-                                </div>
-                                <span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">IN PROGRESS</span>
-                            </div>
-                            <div class="ml-8 text-sm text-gray-600">
-                                <p><i class="fas fa-user text-gray-400 mr-2"></i>Assigned to: Sarah Chen</p>
-                                <p><i class="fas fa-calendar text-gray-400 mr-2"></i>Due: Feb 13, 2025</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-white border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center">
-                                    <input type="checkbox" class="mr-3 w-5 h-5">
-                                    <h4 class="font-semibold text-gray-900">Prepare camera packages</h4>
-                                </div>
-                                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full">TO DO</span>
-                            </div>
-                            <div class="ml-8 text-sm text-gray-600">
-                                <p><i class="fas fa-user text-gray-400 mr-2"></i>Assigned to: Mike Thompson</p>
-                                <p><i class="fas fa-calendar text-gray-400 mr-2"></i>Due: Feb 13, 2025</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-white border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center">
-                                    <input type="checkbox" class="mr-3 w-5 h-5">
-                                    <h4 class="font-semibold text-gray-900">Charge all batteries</h4>
-                                </div>
-                                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full">TO DO</span>
-                            </div>
-                            <div class="ml-8 text-sm text-gray-600">
-                                <p><i class="fas fa-user text-gray-400 mr-2"></i>Assigned to: Tom Anderson</p>
-                                <p><i class="fas fa-calendar text-gray-400 mr-2"></i>Due: Feb 13, 2025</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                        <div class="flex justify-between items-center text-sm">
-                            <span>Task Progress:</span>
-                            <span class="font-semibold">8 of 12 completed (67%)</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                            <div class="bg-purple-600 h-2 rounded-full" style="width: 67%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Deliverables Tab -->
-                <div id="deliverablesTab" class="tab-content hidden">
-                    <div class="space-y-4">
-                        <div class="bg-white border border-gray-200 rounded-lg p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h4 class="text-lg font-semibold text-gray-900">Highlight Reel</h4>
-                                    <p class="text-sm text-gray-600 mt-1">3-5 minute festival highlights</p>
-                                </div>
-                                <span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm font-semibold rounded-full">Pending</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <p class="text-gray-600">Duration:</p>
-                                    <p class="font-semibold text-gray-900">3-5 minutes</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">Due Date:</p>
-                                    <p class="font-semibold text-gray-900">Mar 1, 2025</p>
-                                </div>
-                            </div>
-                            <div class="mt-4">
-                                <div class="flex justify-between text-xs mb-2">
-                                    <span class="text-gray-600">Progress</span>
-                                    <span class="font-semibold">0%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-gray-400 h-2 rounded-full" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white border border-gray-200 rounded-lg p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h4 class="text-lg font-semibold text-gray-900">Full Coverage</h4>
-                                    <p class="text-sm text-gray-600 mt-1">Complete festival documentation</p>
-                                </div>
-                                <span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm font-semibold rounded-full">Pending</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <p class="text-gray-600">Duration:</p>
-                                    <p class="font-semibold text-gray-900">45 minutes</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">Due Date:</p>
-                                    <p class="font-semibold text-gray-900">Mar 15, 2025</p>
-                                </div>
-                            </div>
-                            <div class="mt-4">
-                                <div class="flex justify-between text-xs mb-2">
-                                    <span class="text-gray-600">Progress</span>
-                                    <span class="font-semibold">0%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-gray-400 h-2 rounded-full" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white border border-gray-200 rounded-lg p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h4 class="text-lg font-semibold text-gray-900">Social Media Clips</h4>
-                                    <p class="text-sm text-gray-600 mt-1">Short-form content for social platforms</p>
-                                </div>
-                                <span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm font-semibold rounded-full">Pending</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <p class="text-gray-600">Duration:</p>
-                                    <p class="font-semibold text-gray-900">30-60 seconds each</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">Due Date:</p>
-                                    <p class="font-semibold text-gray-900">Feb 20, 2025</p>
-                                </div>
-                            </div>
-                            <div class="mt-4">
-                                <div class="flex justify-between text-xs mb-2">
-                                    <span class="text-gray-600">Progress</span>
-                                    <span class="font-semibold">0%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-gray-400 h-2 rounded-full" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gear Tab -->
-                <div id="gearTab" class="tab-content hidden">
-                    <div class="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-semibold text-gray-900">Total Insurance Value:</span>
-                            <span class="text-2xl font-bold text-purple-600">$45,000</span>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-white border border-gray-200 rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h4 class="font-semibold text-gray-900">Sony FX6 Camera #1</h4>
-                                    <p class="text-sm text-gray-600">Camera</p>
-                                </div>
-                                <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">Assigned</span>
-                            </div>
-                            <div class="text-sm text-gray-600">
-                                <p>Serial: SN-FX6-001</p>
-                                <p>Insurance Value: <span class="font-semibold text-gray-900">$8,500</span></p>
-                            </div>
-                        </div>
-
-                        <div class="bg-white border border-gray-200 rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h4 class="font-semibold text-gray-900">Sony FX6 Camera #2</h4>
-                                    <p class="text-sm text-gray-600">Camera</p>
-                                </div>
-                                <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">Assigned</span>
-                            </div>
-                            <div class="text-sm text-gray-600">
-                                <p>Serial: SN-FX6-002</p>
-                                <p>Insurance Value: <span class="font-semibold text-gray-900">$8,500</span></p>
-                            </div>
-                        </div>
-
-                        <div class="bg-white border border-gray-200 rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h4 class="font-semibold text-gray-900">DJI Mavic 3 Cine #1</h4>
-                                    <p class="text-sm text-gray-600">Drone</p>
-                                </div>
-                                <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">Assigned</span>
-                            </div>
-                            <div class="text-sm text-gray-600">
-                                <p>Serial: SN-M3C-001</p>
-                                <p>Insurance Value: <span class="font-semibold text-gray-900">$6,500</span></p>
-                            </div>
-                        </div>
-
-                        <div class="bg-white border border-gray-200 rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h4 class="font-semibold text-gray-900">DJI Ronin RS3 Pro #1</h4>
-                                    <p class="text-sm text-gray-600">Gimbal</p>
-                                </div>
-                                <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">Assigned</span>
-                            </div>
-                            <div class="text-sm text-gray-600">
-                                <p>Serial: SN-RS3-001</p>
-                                <p>Insurance Value: <span class="font-semibold text-gray-900">$1,200</span></p>
-                            </div>
-                        </div>
-
-                        <div class="bg-white border border-gray-200 rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h4 class="font-semibold text-gray-900">Sony 24-70mm GM II</h4>
-                                    <p class="text-sm text-gray-600">Lens</p>
-                                </div>
-                                <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">Assigned</span>
-                            </div>
-                            <div class="text-sm text-gray-600">
-                                <p>Serial: SN-2470-001</p>
-                                <p>Insurance Value: <span class="font-semibold text-gray-900">$2,800</span></p>
-                            </div>
-                        </div>
-
-                        <div class="bg-white border border-gray-200 rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h4 class="font-semibold text-gray-900">Rode NTG5 Shotgun Mic</h4>
-                                    <p class="text-sm text-gray-600">Audio</p>
-                                </div>
-                                <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">Assigned</span>
-                            </div>
-                            <div class="text-sm text-gray-600">
-                                <p>Serial: SN-NTG5-001</p>
-                                <p>Insurance Value: <span class="font-semibold text-gray-900">$800</span></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+            <div class="p-4 sm:p-6" id="tabContent">
+                <!-- Tab content loads here -->
             </div>
         </div>
+    </div>
 
+    <!-- Modal -->
+    <div id="eventModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeEventModal()">
+        <div id="eventModalContent" class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"></div>
     </div>
 
     <script src="js/demo-data.js"></script>
     <script>
-        // Get event ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const eventId = urlParams.get('id') || 'evt-001';
         const event = getEventById(eventId);
+        const userRole = localStorage.getItem('userRole') || 'admin';
+        const userName = localStorage.getItem('userName') || 'User';
+        
+        document.getElementById('userName').textContent = userName;
 
-        // Populate event details
         if (event) {
             document.getElementById('eventName').textContent = event.name;
             document.getElementById('eventLocation').textContent = event.location;
-            document.getElementById('eventDates').textContent = `${new Date(event.startDate).toLocaleDateString('en-NZ', {month: 'short', day: 'numeric'})} - ${new Date(event.endDate).toLocaleDateString('en-NZ', {month: 'short', day: 'numeric', year: 'numeric'})}`;
+            document.getElementById('eventDates').textContent = formatDateRange(event.startDate, event.endDate);
             document.getElementById('eventAttendees').textContent = event.attendees.toLocaleString();
-            document.getElementById('budgetAmount').textContent = `$${event.quoteAmount.toLocaleString()}`;
-            document.getElementById('paidAmount').textContent = `$${event.paidAmount.toLocaleString()}`;
+            document.getElementById('budgetAmount').textContent = '$' + event.quoteAmount.toLocaleString();
+            document.getElementById('paidAmount').textContent = '$' + event.paidAmount.toLocaleString();
             document.getElementById('crewCount').textContent = event.crewCount;
-            document.getElementById('gearValue').textContent = `$${event.gearValue.toLocaleString()}`;
+            document.getElementById('gearValue').textContent = '$' + event.gearValue.toLocaleString();
+            
+            const statusEl = document.getElementById('eventStatus');
+            statusEl.textContent = getStatusLabel(event.status);
+            statusEl.className = 'px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ' + getStatusBadgeClass(event.status);
+            
+            document.title = event.name + ' - COMMOTION.APP';
         }
 
-        // Tab switching
+        let currentTab = 'overview';
+
         function switchTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
-            
-            // Remove active class from all buttons
+            currentTab = tabName;
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.classList.remove('active');
                 btn.classList.add('text-gray-500');
             });
-            
-            // Show selected tab
-            document.getElementById(tabName + 'Tab').classList.remove('hidden');
-            
-            // Add active class to clicked button
             event.target.classList.add('active');
             event.target.classList.remove('text-gray-500');
+            renderTab();
+        }
+
+        function renderTab() {
+            const container = document.getElementById('tabContent');
+            switch(currentTab) {
+                case 'overview': container.innerHTML = renderOverviewTab(); break;
+                case 'schedule': container.innerHTML = renderScheduleTab(); break;
+                case 'crew': container.innerHTML = renderCrewTab(); break;
+                case 'deliverables': container.innerHTML = renderDeliverablesTab(); break;
+                case 'gear': container.innerHTML = renderGearTab(); break;
+            }
+        }
+
+        function renderOverviewTab() {
+            const client = DEMO_DATA.clients.find(c => c.id === event.client_id) || {};
+            return `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 rounded-lg p-4 sm:p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4"><i class="fas fa-building commotion-red mr-2"></i>Client</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between"><span class="text-gray-600">Company:</span><span class="font-semibold">${client.company || event.clientName}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-600">Contact:</span><span class="font-semibold">${client.contact || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-600">Email:</span><span class="font-semibold text-blue-600">${client.email || '--'}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-600">Phone:</span><span class="font-semibold">${client.phone || '--'}</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4 sm:p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4"><i class="fas fa-dollar-sign commotion-red mr-2"></i>Payment</h3>
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-2"><span>Progress</span><span class="font-semibold">${Math.round(event.paidAmount / event.quoteAmount * 100)}%</span></div>
+                            <div class="bg-gray-200 rounded-full h-3"><div class="bg-green-500 h-3 rounded-full progress-bar" style="width: ${event.paidAmount / event.quoteAmount * 100}%"></div></div>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-gray-600">Quote:</span><span class="font-semibold">$${event.quoteAmount.toLocaleString()}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-600">Paid:</span><span class="text-green-600 font-semibold">$${event.paidAmount.toLocaleString()}</span></div>
+                            <div class="flex justify-between border-t pt-2"><span class="font-semibold">Remaining:</span><span class="font-bold commotion-red">$${(event.quoteAmount - event.paidAmount).toLocaleString()}</span></div>
+                        </div>
+                    </div>
+                </div>
+                ${event.notes ? `<div class="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6 mt-6"><h3 class="text-lg font-bold text-gray-900 mb-2"><i class="fas fa-sticky-note commotion-red mr-2"></i>Notes</h3><p class="text-sm text-gray-700">${event.notes}</p></div>` : ''}
+            `;
+        }
+
+        function renderScheduleTab() {
+            if (!event.schedule || event.schedule.length === 0) {
+                return `<div class="text-center py-12 text-gray-500"><i class="fas fa-calendar-times text-4xl mb-3"></i><p>No schedule available</p><button onclick="addScheduleDay()" class="mt-4 px-4 py-2 bg-commotion-red text-white rounded-lg text-sm font-semibold">Create Schedule</button></div>`;
+            }
+            
+            return `
+                <div class="space-y-6">
+                    ${event.schedule.map(day => `
+                        <div class="border-l-4 border-red-200 pl-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="font-bold text-gray-900">${day.title}</h3>
+                                <span class="text-sm text-gray-500">${new Date(day.date).toLocaleDateString('en-NZ', {weekday: 'short', month: 'short', day: 'numeric'})}</span>
+                            </div>
+                            <div class="space-y-2">
+                                ${day.items.map(item => `
+                                    <div class="flex items-start p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer" onclick="editScheduleItem('${day.date}', '${item.time}')">
+                                        <span class="text-sm font-mono font-semibold commotion-red w-14 flex-shrink-0">${item.time}</span>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-gray-900">${item.activity}</p>
+                                            ${item.crew && item.crew.length > 0 ? `<p class="text-xs text-gray-500 mt-1 truncate"><i class="fas fa-users mr-1"></i>${item.crew.map(c => DEMO_DATA.crew.find(cr => cr.id === c)?.name || c).join(', ')}</p>` : ''}
+                                        </div>
+                                        <i class="fas fa-edit text-gray-400 ml-2"></i>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <button onclick="addScheduleItem()" class="w-full mt-6 px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-red-500 hover:text-red-600"><i class="fas fa-plus mr-2"></i>Add Schedule Item</button>
+            `;
+        }
+
+        function renderCrewTab() {
+            const assignedCrew = event.crewAssigned ? event.crewAssigned.map(id => DEMO_DATA.crew.find(c => c.id === id)).filter(Boolean) : [];
+            
+            if (assignedCrew.length === 0) {
+                return `<div class="text-center py-12 text-gray-500"><i class="fas fa-users text-4xl mb-3"></i><p>No crew assigned</p><button onclick="assignCrew()" class="mt-4 px-4 py-2 bg-commotion-red text-white rounded-lg text-sm font-semibold">Assign Crew</button></div>`;
+            }
+            
+            return `
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${assignedCrew.map(crew => `
+                        <div class="crew-card bg-white border border-gray-200 rounded-xl p-4">
+                            <div class="flex items-center mb-3">
+                                <div class="w-12 h-12 rounded-full bg-commotion-red text-white flex items-center justify-center font-bold mr-3">${crew.name.split(' ').map(n => n[0]).join('')}</div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900">${crew.name}</h4>
+                                    <p class="text-sm text-gray-500">${crew.role}</p>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-600 space-y-1">
+                                <p><i class="fas fa-dollar-sign w-4 text-gray-400"></i> $${crew.rate}/day</p>
+                                <p><i class="fas fa-phone w-4 text-gray-400"></i> ${crew.phone}</p>
+                            </div>
+                            <button onclick="viewCrewMember('${crew.id}')" class="w-full mt-3 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold">View Profile</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <button onclick="assignCrew()" class="w-full mt-6 px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-red-500 hover:text-red-600"><i class="fas fa-plus mr-2"></i>Add Crew Member</button>
+            `;
+        }
+
+        function renderDeliverablesTab() {
+            if (!event.deliverables || event.deliverables.length === 0) {
+                return `<div class="text-center py-12 text-gray-500"><i class="fas fa-film text-4xl mb-3"></i><p>No deliverables defined</p><button onclick="addDeliverable()" class="mt-4 px-4 py-2 bg-commotion-red text-white rounded-lg text-sm font-semibold">Add Deliverable</button></div>`;
+            }
+            
+            return `
+                <div class="space-y-4">
+                    ${event.deliverables.map(d => `
+                        <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+                                <div>
+                                    <h4 class="font-bold text-gray-900">${d.type}</h4>
+                                    <p class="text-sm text-gray-500">Duration: ${d.duration}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(d.status)}">${getStatusLabel(d.status)}</span>
+                                    <button onclick="editDeliverable('${d.id}')" class="p-2 text-gray-400 hover:text-gray-600"><i class="fas fa-edit"></i></button>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Progress</span><span>${d.progress || 0}%</span></div>
+                                <div class="bg-gray-200 rounded-full h-2"><div class="bg-commotion-red h-2 rounded-full progress-bar" style="width: ${d.progress || 0}%"></div></div>
+                            </div>
+                            <p class="text-xs text-gray-500"><i class="fas fa-calendar mr-1"></i>Due: ${new Date(d.dueDate).toLocaleDateString('en-NZ', {month: 'short', day: 'numeric', year: 'numeric'})}</p>
+                        </div>
+                    `).join('')}
+                </div>
+                <button onclick="addDeliverable()" class="w-full mt-6 px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-red-500 hover:text-red-600"><i class="fas fa-plus mr-2"></i>Add Deliverable</button>
+            `;
+        }
+
+        function renderGearTab() {
+            const assignedGear = DEMO_DATA.gear.filter(g => g.assignedTo === eventId);
+            
+            return `
+                <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-semibold text-gray-900">Total Insurance Value:</span>
+                        <span class="text-xl font-bold commotion-red">$${event.gearValue.toLocaleString()}</span>
+                    </div>
+                </div>
+                ${assignedGear.length > 0 ? `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        ${assignedGear.map(gear => `
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900">${gear.name}</h4>
+                                        <p class="text-sm text-gray-500">${gear.category}</p>
+                                    </div>
+                                    <span class="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">Assigned</span>
+                                </div>
+                                <div class="text-sm text-gray-600">
+                                    <p>Value: <span class="font-semibold">$${gear.value.toLocaleString()}</span></p>
+                                    <p>Owner: <span class="font-semibold ${gear.ownerId === 'commotion' ? 'commotion-red' : 'text-blue-600'}">${gear.owner}</span></p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '<div class="text-center py-8 text-gray-500"><p>No gear specifically assigned to this event</p></div>'}
+                <button onclick="assignGear()" class="w-full mt-6 px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-red-500 hover:text-red-600"><i class="fas fa-plus mr-2"></i>Assign Gear</button>
+            `;
+        }
+
+        // Action functions
+        function editEvent() { alert('Edit event (Demo mode)'); }
+        function exportEvent() { alert('Export event data (Demo mode)'); }
+        function addScheduleDay() { alert('Add schedule day (Demo mode)'); }
+        function addScheduleItem() { alert('Add schedule item (Demo mode)'); }
+        function editScheduleItem(date, time) { alert(`Edit schedule item: ${date} ${time} (Demo mode)`); }
+        function assignCrew() { alert('Assign crew (Demo mode)'); }
+        function viewCrewMember(id) { alert(`View crew member ${id} (Demo mode)`); }
+        function addDeliverable() { alert('Add deliverable (Demo mode)'); }
+        function editDeliverable(id) { alert(`Edit deliverable ${id} (Demo mode)`); }
+        function assignGear() { alert('Assign gear (Demo mode)'); }
+        function closeEventModal() { document.getElementById('eventModal').classList.add('hidden'); document.getElementById('eventModal').classList.remove('flex'); }
+
+        // Utility functions
+        function getStatusLabel(status) {
+            const labels = {'confirmed': 'Confirmed', 'quote-sent': 'Quote Sent', 'in-progress': 'In Progress', 'completed': 'Completed', 'lead': 'Lead', 'pending': 'Pending'};
+            return labels[status] || status;
+        }
+        
+        function getStatusBadgeClass(status) {
+            const classes = {'confirmed': 'bg-green-100 text-green-700', 'quote-sent': 'bg-yellow-100 text-yellow-700', 'in-progress': 'bg-blue-100 text-blue-700', 'completed': 'bg-gray-100 text-gray-700', 'lead': 'bg-gray-100 text-gray-700', 'pending': 'bg-gray-100 text-gray-700'};
+            return classes[status] || 'bg-gray-100 text-gray-700';
+        }
+        
+        function formatDateRange(start, end) {
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            if (start === end) return startDate.toLocaleDateString('en-NZ', {month: 'short', day: 'numeric', year: 'numeric'});
+            return `${startDate.toLocaleDateString('en-NZ', {month: 'short', day: 'numeric'})} - ${endDate.toLocaleDateString('en-NZ', {month: 'short', day: 'numeric', year: 'numeric'})}`;
         }
 
         function logout() {
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('userName');
+            localStorage.clear();
             window.location.href = 'index.html';
         }
+
+        // Initial render
+        renderTab();
     </script>
 
 </body>

@@ -9,6 +9,9 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
         
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { overflow-x: hidden; max-width: 100vw; }
+        
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background-color: #f8f9fa;
@@ -17,36 +20,29 @@
         .commotion-red { color: #b93a3a; }
         .bg-commotion-red { background-color: #b93a3a; }
         .hover-commotion-red:hover { background-color: #a02e2e; }
+        .logo-text { font-weight: 900; letter-spacing: -0.02em; }
         
-        .logo-text {
-            font-weight: 900;
-            letter-spacing: -0.02em;
-        }
+        .gear-card { transition: all 0.2s; }
+        .gear-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         
-        .gear-card {
-            transition: all 0.2s;
-        }
-        .gear-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
+        .filter-btn.active { background-color: #b93a3a !important; color: white !important; }
     </style>
 </head>
 <body>
 
     <!-- Navbar -->
     <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
-                    <button onclick="window.location.href='dashboard.html'" class="mr-4 text-gray-500 hover:text-gray-700">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-14 sm:h-16">
+                <div class="flex items-center min-w-0">
+                    <button onclick="window.location.href='dashboard.html'" class="mr-3 text-gray-500 hover:text-gray-700 p-2">
                         <i class="fas fa-arrow-left"></i>
                     </button>
-                    <span class="text-2xl logo-text commotion-red">COMMOTION.APP</span>
+                    <span class="text-lg sm:text-2xl logo-text commotion-red truncate">COMMOTION.APP</span>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <span class="text-sm text-gray-600" id="userName">Admin User</span>
-                    <button onclick="logout()" class="text-gray-500 hover:text-gray-700">
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                    <span class="text-xs sm:text-sm text-gray-600 hidden sm:inline" id="userName">User</span>
+                    <button onclick="logout()" class="text-gray-500 hover:text-gray-700 p-2">
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>
@@ -54,167 +50,294 @@
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         
         <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">
-                <i class="fas fa-camera mr-3 commotion-red"></i>
-                Gear Inventory
+        <div class="mb-6">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
+                <i class="fas fa-camera mr-2 commotion-red"></i>Gear Inventory
             </h1>
-            <p class="text-gray-600 mt-1">Complete equipment list with insurance values</p>
+            <p class="text-gray-600 mt-1 text-sm">Equipment list with insurance values & ownership</p>
         </div>
 
-        <!-- Stats Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <p class="text-sm font-medium text-gray-600">Total Gear Value</p>
-                <p class="text-2xl font-bold text-gray-900 mt-2" id="totalValue">$85,000</p>
-                <p class="text-xs text-green-600 mt-1"><i class="fas fa-shield-alt"></i> Fully Insured</p>
+        <!-- Stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-6">
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <p class="text-xs font-medium text-gray-600">Total Value</p>
+                <p class="text-lg sm:text-2xl font-bold text-gray-900 mt-1" id="totalValue">$0</p>
             </div>
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <p class="text-sm font-medium text-gray-600">Total Items</p>
-                <p class="text-2xl font-bold text-gray-900 mt-2" id="totalItems">15</p>
-                <p class="text-xs text-gray-600 mt-1">Across all categories</p>
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <p class="text-xs font-medium text-gray-600">Items</p>
+                <p class="text-lg sm:text-2xl font-bold text-gray-900 mt-1" id="totalItems">0</p>
             </div>
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <p class="text-sm font-medium text-gray-600">Available</p>
-                <p class="text-2xl font-bold text-green-600 mt-2" id="availableItems">11</p>
-                <p class="text-xs text-gray-600 mt-1">Ready to assign</p>
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <p class="text-xs font-medium text-gray-600">Available</p>
+                <p class="text-lg sm:text-2xl font-bold text-green-600 mt-1" id="availableItems">0</p>
             </div>
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <p class="text-sm font-medium text-gray-600">In Use</p>
-                <p class="text-2xl font-bold commotion-red mt-2" id="inUseItems">4</p>
-                <p class="text-xs text-gray-600 mt-1">Currently assigned</p>
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <p class="text-xs font-medium text-gray-600">In Use</p>
+                <p class="text-lg sm:text-2xl font-bold commotion-red mt-1" id="inUseItems">0</p>
             </div>
         </div>
 
-        <!-- Filter Tabs -->
-        <div class="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-100">
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4 mb-6 border border-gray-100">
             <div class="flex flex-wrap gap-2">
-                <button onclick="filterGear('all')" class="filter-btn active px-4 py-2 rounded-lg bg-commotion-red text-white font-semibold">
-                    All Equipment
-                </button>
-                <button onclick="filterGear('Camera')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
-                    Cameras
-                </button>
-                <button onclick="filterGear('Lens')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
-                    Lenses
-                </button>
-                <button onclick="filterGear('Drone')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
-                    Drones
-                </button>
-                <button onclick="filterGear('Gimbal')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
-                    Gimbals
-                </button>
-                <button onclick="filterGear('Audio')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
-                    Audio
-                </button>
-                <button onclick="filterGear('Lighting')" class="filter-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
-                    Lighting
-                </button>
+                <button onclick="filterGear('all')" class="filter-btn active px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold">All</button>
+                <button onclick="filterGear('Camera')" class="filter-btn px-3 py-2 rounded-lg bg-gray-100 text-gray-700 text-xs sm:text-sm font-semibold">Cameras</button>
+                <button onclick="filterGear('Lens')" class="filter-btn px-3 py-2 rounded-lg bg-gray-100 text-gray-700 text-xs sm:text-sm font-semibold">Lenses</button>
+                <button onclick="filterGear('Drone')" class="filter-btn px-3 py-2 rounded-lg bg-gray-100 text-gray-700 text-xs sm:text-sm font-semibold">Drones</button>
+                <button onclick="filterGear('Gimbal')" class="filter-btn px-3 py-2 rounded-lg bg-gray-100 text-gray-700 text-xs sm:text-sm font-semibold">Gimbals</button>
+                <button onclick="filterGear('Audio')" class="filter-btn px-3 py-2 rounded-lg bg-gray-100 text-gray-700 text-xs sm:text-sm font-semibold">Audio</button>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+                <button onclick="filterByOwner('all')" class="owner-btn active px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 text-white">All Owners</button>
+                <button onclick="filterByOwner('commotion')" class="owner-btn px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Commotion Studio</button>
+                <button onclick="filterByOwner('crew-sam')" class="owner-btn px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">Sam King</button>
             </div>
         </div>
 
-        <!-- Gear List -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="gearGrid">
-            <!-- Gear cards will be inserted here -->
-        </div>
+        <!-- Gear Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="gearGrid"></div>
 
+        <!-- Add Gear Button (Admin only) -->
+        <div id="addGearSection" class="mt-6 hidden">
+            <button onclick="showAddGearModal()" class="w-full px-4 py-4 border-2 border-dashed border-gray-300 text-gray-600 rounded-xl hover:border-red-500 hover:text-red-600 font-semibold">
+                <i class="fas fa-plus mr-2"></i>Add New Gear
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="gearModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeGearModal()">
+        <div id="gearModalContent" class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"></div>
     </div>
 
     <script src="js/demo-data.js"></script>
     <script>
-        // Set user name
         const userName = localStorage.getItem('userName') || 'User';
+        const userRole = localStorage.getItem('userRole') || 'user';
         document.getElementById('userName').textContent = userName;
+        
+        if (userRole === 'admin') {
+            document.getElementById('addGearSection').classList.remove('hidden');
+        }
 
-        // Calculate stats
+        // Stats
         document.getElementById('totalValue').textContent = '$' + DEMO_DATA.gear.reduce((sum, g) => sum + g.value, 0).toLocaleString();
         document.getElementById('totalItems').textContent = DEMO_DATA.gear.length;
         document.getElementById('availableItems').textContent = DEMO_DATA.gear.filter(g => g.status === 'available').length;
         document.getElementById('inUseItems').textContent = DEMO_DATA.gear.filter(g => g.status === 'in-use').length;
 
         let currentFilter = 'all';
+        let currentOwner = 'all';
 
-        function renderGear(filter = 'all') {
+        function renderGear() {
             const grid = document.getElementById('gearGrid');
-            const filteredGear = filter === 'all' 
-                ? DEMO_DATA.gear 
-                : DEMO_DATA.gear.filter(g => g.category === filter);
+            let filtered = DEMO_DATA.gear;
+            
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(g => g.category === currentFilter);
+            }
+            if (currentOwner !== 'all') {
+                filtered = filtered.filter(g => g.ownerId === currentOwner);
+            }
 
-            grid.innerHTML = filteredGear.map(gear => {
+            grid.innerHTML = filtered.map(gear => {
                 const isAvailable = gear.status === 'available';
                 const assignedEvent = gear.assignedTo ? DEMO_DATA.events.find(e => e.id === gear.assignedTo) : null;
                 
                 return `
-                    <div class="gear-card bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex items-center">
-                                <div class="bg-gray-100 rounded-lg p-3 mr-3">
-                                    <i class="fas ${getCategoryIcon(gear.category)} text-gray-600 text-xl"></i>
+                    <div class="gear-card bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center min-w-0">
+                                <div class="bg-gray-100 rounded-lg p-2 sm:p-3 mr-3 flex-shrink-0">
+                                    <i class="fas ${getCategoryIcon(gear.category)} text-gray-600"></i>
                                 </div>
-                                <div>
-                                    <h3 class="font-bold text-gray-900">${gear.name}</h3>
-                                    <p class="text-sm text-gray-500">${gear.category}</p>
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-gray-900 text-sm truncate">${gear.name}</h3>
+                                    <p class="text-xs text-gray-500">${gear.category}</p>
                                 </div>
                             </div>
-                            <span class="px-2 py-1 rounded-full text-xs font-semibold ${isAvailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${isAvailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
                                 ${isAvailable ? 'Available' : 'In Use'}
                             </span>
                         </div>
                         
                         <div class="space-y-2 text-sm text-gray-600">
                             <div class="flex justify-between">
-                                <span>Insurance Value:</span>
+                                <span>Value:</span>
                                 <span class="font-semibold text-gray-900">$${gear.value.toLocaleString()}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Owner:</span>
+                                <span class="font-semibold ${gear.ownerId === 'commotion' ? 'commotion-red' : 'text-blue-600'}">${gear.owner}</span>
                             </div>
                             ${!isAvailable && assignedEvent ? `
                                 <div class="flex justify-between">
-                                    <span>Assigned to:</span>
-                                    <span class="font-semibold commotion-red">${assignedEvent.name.split(' ')[0]}</span>
+                                    <span>Assigned:</span>
+                                    <span class="font-semibold text-gray-900">${assignedEvent.name.split(' ')[0]}</span>
                                 </div>
                             ` : ''}
                         </div>
 
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                            <button class="w-full px-4 py-2 text-sm font-semibold ${isAvailable ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' : 'bg-red-50 text-red-700'} rounded-lg">
-                                <i class="fas ${isAvailable ? 'fa-edit' : 'fa-eye'} mr-2"></i>
-                                ${isAvailable ? 'Manage' : 'View Details'}
+                        <div class="mt-4 pt-3 border-t border-gray-200">
+                            <button onclick="showGearDetail('${gear.id}')" class="w-full px-4 py-2 text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg">
+                                <i class="fas fa-eye mr-2"></i>View Details
                             </button>
                         </div>
                     </div>
                 `;
             }).join('');
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500"><i class="fas fa-box-open text-4xl mb-3"></i><p>No gear found</p></div>';
+            }
         }
 
         function filterGear(category) {
             currentFilter = category;
-            
-            // Update button states
             document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active', 'bg-commotion-red', 'text-white');
+                btn.classList.remove('active');
                 btn.classList.add('bg-gray-100', 'text-gray-700');
             });
-            event.target.classList.add('active', 'bg-commotion-red', 'text-white');
+            event.target.classList.add('active');
             event.target.classList.remove('bg-gray-100', 'text-gray-700');
-            
-            renderGear(category);
+            renderGear();
+        }
+
+        function filterByOwner(owner) {
+            currentOwner = owner;
+            document.querySelectorAll('.owner-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-gray-800', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            event.target.classList.add('active', 'bg-gray-800', 'text-white');
+            event.target.classList.remove('bg-gray-200', 'text-gray-700');
+            renderGear();
         }
 
         function getCategoryIcon(category) {
             const icons = {
-                'Camera': 'fa-video',
-                'Lens': 'fa-eye',
-                'Drone': 'fa-helicopter',
-                'Gimbal': 'fa-circle-notch',
-                'Audio': 'fa-microphone',
-                'Lighting': 'fa-lightbulb',
-                'Monitor': 'fa-tv',
-                'Support': 'fa-grip-vertical',
-                'Storage': 'fa-hdd'
+                'Camera': 'fa-video', 'Lens': 'fa-circle', 'Drone': 'fa-helicopter',
+                'Gimbal': 'fa-circle-notch', 'Audio': 'fa-microphone', 'Lighting': 'fa-lightbulb',
+                'Monitor': 'fa-tv', 'Support': 'fa-grip-vertical', 'Storage': 'fa-hdd'
             };
             return icons[category] || 'fa-camera';
+        }
+
+        function showGearDetail(gearId) {
+            const gear = DEMO_DATA.gear.find(g => g.id === gearId);
+            if (!gear) return;
+            
+            const assignedEvent = gear.assignedTo ? DEMO_DATA.events.find(e => e.id === gear.assignedTo) : null;
+            const modal = document.getElementById('gearModal');
+            const content = document.getElementById('gearModalContent');
+            
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">${gear.name}</h2>
+                            <p class="text-gray-500">${gear.category}</p>
+                        </div>
+                        <button onclick="closeGearModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <p class="text-xs text-gray-500">Insurance Value</p>
+                                <p class="text-xl font-bold text-gray-900">$${gear.value.toLocaleString()}</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <p class="text-xs text-gray-500">Status</p>
+                                <p class="text-xl font-bold ${gear.status === 'available' ? 'text-green-600' : 'commotion-red'}">${gear.status === 'available' ? 'Available' : 'In Use'}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-xs text-gray-500 mb-1">Owner</p>
+                            <p class="font-semibold ${gear.ownerId === 'commotion' ? 'commotion-red' : 'text-blue-600'}">${gear.owner}</p>
+                        </div>
+                        
+                        ${assignedEvent ? `
+                            <div class="bg-red-50 rounded-lg p-4">
+                                <p class="text-xs text-gray-500 mb-1">Currently Assigned To</p>
+                                <p class="font-semibold commotion-red">${assignedEvent.name}</p>
+                                <p class="text-xs text-gray-500 mt-1">${assignedEvent.location} • ${new Date(assignedEvent.startDate).toLocaleDateString('en-NZ', {month: 'short', day: 'numeric'})}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${userRole === 'admin' ? `
+                            <div class="flex gap-3 pt-4">
+                                <button onclick="alert('Edit gear (Demo mode)')" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">
+                                    <i class="fas fa-edit mr-2"></i>Edit
+                                </button>
+                                <button onclick="alert('Assign gear (Demo mode)')" class="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">
+                                    <i class="fas fa-link mr-2"></i>Assign
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeGearModal() {
+            const modal = document.getElementById('gearModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function showAddGearModal() {
+            const modal = document.getElementById('gearModal');
+            const content = document.getElementById('gearModalContent');
+            
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-plus mr-2 commotion-red"></i>Add New Gear</h2>
+                        <button onclick="closeGearModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="event.preventDefault(); alert('Gear added (Demo mode)'); closeGearModal();" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Sony FX6 Camera #4" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                    <option>Camera</option><option>Lens</option><option>Drone</option>
+                                    <option>Gimbal</option><option>Audio</option><option>Lighting</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Value ($)</label>
+                                <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="8500" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Owner</label>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="commotion">Commotion Studio</option>
+                                <option value="crew-sam">Sam King</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">Add Gear</button>
+                            <button type="button" onclick="closeGearModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         }
 
         function logout() {
@@ -222,7 +345,6 @@
             window.location.href = 'index.html';
         }
 
-        // Initial render
         renderGear();
     </script>
 

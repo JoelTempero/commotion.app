@@ -1,4 +1,4 @@
-// Demo Data for EventCrew Pro
+// Demo Data for COMMOTION.APP
 // Realistic New Zealand Festival Data
 
 const DEMO_DATA = {
@@ -19,16 +19,42 @@ const DEMO_DATA = {
             paidAmount: 6250,
             paymentStatus: 'deposit',
             crewCount: 4,
+            crewAssigned: ['crew-001', 'crew-002', 'crew-005', 'crew-sam'],
             gearValue: 45000,
             deliverables: [
-                { type: 'Highlight Reel', duration: '3-5 min', dueDate: '2025-03-01', status: 'pending' },
-                { type: 'Full Coverage', duration: '45 min', dueDate: '2025-03-15', status: 'pending' },
-                { type: 'Social Media Clips', duration: '30-60 sec', dueDate: '2025-02-20', status: 'pending' }
+                { id: 'del-001', type: 'Highlight Reel', duration: '3-5 min', dueDate: '2025-03-01', status: 'pending', progress: 0 },
+                { id: 'del-002', type: 'Full Coverage', duration: '45 min', dueDate: '2025-03-15', status: 'pending', progress: 0 },
+                { id: 'del-003', type: 'Social Media Clips', duration: '30-60 sec', dueDate: '2025-02-20', status: 'pending', progress: 0 }
             ],
             tasks: 12,
             completedTasks: 8,
             notes: 'Three-day boutique festival. Main stage coverage priority. VIP area requires special access passes.',
-            color: '#10b981'
+            color: '#10b981',
+            schedule: [
+                { date: '2025-02-14', title: 'Day 1 - Setup & Soft Opening', items: [
+                    { time: '08:00', activity: 'Crew arrival & gear setup', crew: ['crew-001', 'crew-sam'] },
+                    { time: '10:00', activity: 'Site walkthrough with client', crew: ['crew-001'] },
+                    { time: '14:00', activity: 'Sound check coverage', crew: ['crew-001', 'crew-005'] },
+                    { time: '16:00', activity: 'Gates open - crowd arrivals', crew: ['crew-001', 'crew-sam', 'crew-005'] },
+                    { time: '18:00', activity: 'Opening act - Main Stage', crew: ['crew-001', 'crew-005'] },
+                    { time: '20:00', activity: 'Headliner Day 1', crew: ['crew-001', 'crew-sam', 'crew-002'] }
+                ]},
+                { date: '2025-02-15', title: 'Day 2 - Main Event Day', items: [
+                    { time: '06:00', activity: 'Sunrise drone shots', crew: ['crew-002'] },
+                    { time: '09:00', activity: 'Morning atmosphere & camping', crew: ['crew-sam'] },
+                    { time: '12:00', activity: 'Afternoon sets begin', crew: ['crew-001', 'crew-005'] },
+                    { time: '15:00', activity: 'VIP area coverage', crew: ['crew-sam'] },
+                    { time: '18:00', activity: 'Golden hour drone aerials', crew: ['crew-002'] },
+                    { time: '20:00', activity: 'Main headliner', crew: ['crew-001', 'crew-sam', 'crew-005', 'crew-002'] },
+                    { time: '23:00', activity: 'Late night sets', crew: ['crew-001', 'crew-sam'] }
+                ]},
+                { date: '2025-02-16', title: 'Day 3 - Final Day & Packdown', items: [
+                    { time: '08:00', activity: 'Morning recovery footage', crew: ['crew-sam'] },
+                    { time: '12:00', activity: 'Final afternoon performances', crew: ['crew-001', 'crew-005'] },
+                    { time: '16:00', activity: 'Closing ceremony', crew: ['crew-001', 'crew-sam', 'crew-002'] },
+                    { time: '18:00', activity: 'Pack down & depart', crew: ['crew-001', 'crew-sam'] }
+                ]}
+            ]
         },
         {
             id: 'evt-002',
@@ -46,15 +72,17 @@ const DEMO_DATA = {
             paidAmount: 9800,
             paymentStatus: 'paid',
             crewCount: 3,
+            crewAssigned: ['crew-001', 'crew-003', 'crew-006'],
             gearValue: 32000,
             deliverables: [
-                { type: 'Highlight Reel', duration: '4 min', dueDate: '2025-01-20', status: 'completed' },
-                { type: 'Social Media Package', duration: 'Various', dueDate: '2025-01-10', status: 'completed' }
+                { id: 'del-004', type: 'Highlight Reel', duration: '4 min', dueDate: '2025-01-20', status: 'completed', progress: 100 },
+                { id: 'del-005', type: 'Social Media Package', duration: 'Various', dueDate: '2025-01-10', status: 'completed', progress: 100 }
             ],
             tasks: 15,
             completedTasks: 15,
             notes: 'Beach location. Electronic music focus. Excellent sunset shots on Day 2.',
-            color: '#6366f1'
+            color: '#6366f1',
+            schedule: []
         },
         {
             id: 'evt-003',
@@ -72,16 +100,18 @@ const DEMO_DATA = {
             paidAmount: 8250,
             paymentStatus: 'partial',
             crewCount: 5,
+            crewAssigned: ['crew-001', 'crew-002', 'crew-003', 'crew-006', 'crew-007'],
             gearValue: 52000,
             deliverables: [
-                { type: 'Highlight Reel', duration: '5 min', dueDate: '2025-01-15', status: 'in-progress' },
-                { type: 'Artist Spotlights', duration: '10x 2min', dueDate: '2025-01-20', status: 'in-progress' },
-                { type: 'After Movie', duration: '8-10 min', dueDate: '2025-01-30', status: 'pending' }
+                { id: 'del-006', type: 'Highlight Reel', duration: '5 min', dueDate: '2025-01-15', status: 'in-progress', progress: 65 },
+                { id: 'del-007', type: 'Artist Spotlights', duration: '10x 2min', dueDate: '2025-01-20', status: 'in-progress', progress: 40 },
+                { id: 'del-008', type: 'After Movie', duration: '8-10 min', dueDate: '2025-01-30', status: 'pending', progress: 10 }
             ],
             tasks: 18,
             completedTasks: 12,
             notes: 'Large urban festival. Multiple stages. Drone footage approved for aerial shots.',
-            color: '#f59e0b'
+            color: '#f59e0b',
+            schedule: []
         },
         {
             id: 'evt-004',
@@ -99,16 +129,42 @@ const DEMO_DATA = {
             paidAmount: 10000,
             paymentStatus: 'partial',
             crewCount: 6,
+            crewAssigned: ['crew-001', 'crew-002', 'crew-004', 'crew-005', 'crew-sam', 'crew-008'],
             gearValue: 68000,
             deliverables: [
-                { type: 'Official After Movie', duration: '8 min', dueDate: '2025-01-20', status: 'in-progress' },
-                { type: 'Daily Highlights', duration: '4x 3min', dueDate: '2025-01-05', status: 'in-progress' },
-                { type: 'Sponsor Content', duration: 'Various', dueDate: '2025-01-10', status: 'pending' }
+                { id: 'del-009', type: 'Official After Movie', duration: '8 min', dueDate: '2025-01-20', status: 'in-progress', progress: 35 },
+                { id: 'del-010', type: 'Daily Highlights', duration: '4x 3min', dueDate: '2025-01-05', status: 'in-progress', progress: 75 },
+                { id: 'del-011', type: 'Sponsor Content', duration: 'Various', dueDate: '2025-01-10', status: 'pending', progress: 20 }
             ],
             tasks: 24,
             completedTasks: 16,
             notes: 'Premium festival in stunning alpine location. Weather-dependent drone shots. Camping coverage required.',
-            color: '#ec4899'
+            color: '#ec4899',
+            schedule: [
+                { date: '2024-12-29', title: 'Day 1 - NYE Eve', items: [
+                    { time: '10:00', activity: 'Site setup & morning shots', crew: ['crew-001', 'crew-sam'] },
+                    { time: '14:00', activity: 'Crowd arrivals', crew: ['crew-sam', 'crew-005'] },
+                    { time: '18:00', activity: 'Sunset main stage', crew: ['crew-001', 'crew-002'] },
+                    { time: '22:00', activity: 'Night performances', crew: ['crew-001', 'crew-sam', 'crew-004'] }
+                ]},
+                { date: '2024-12-30', title: 'Day 2', items: [
+                    { time: '08:00', activity: 'Morning campsite coverage', crew: ['crew-sam'] },
+                    { time: '12:00', activity: 'Day sessions', crew: ['crew-001', 'crew-005'] },
+                    { time: '16:00', activity: 'Mountain backdrop drone shots', crew: ['crew-002'] },
+                    { time: '20:00', activity: 'Evening headliners', crew: ['crew-001', 'crew-sam', 'crew-004'] }
+                ]},
+                { date: '2024-12-31', title: 'Day 3 - NYE', items: [
+                    { time: '10:00', activity: 'NYE morning atmosphere', crew: ['crew-sam'] },
+                    { time: '15:00', activity: 'Build up to midnight', crew: ['crew-001', 'crew-005'] },
+                    { time: '23:30', activity: 'Countdown coverage', crew: ['crew-001', 'crew-sam', 'crew-002', 'crew-004'] },
+                    { time: '00:00', activity: 'Midnight celebrations', crew: ['crew-001', 'crew-sam', 'crew-002'] }
+                ]},
+                { date: '2025-01-01', title: 'Day 4 - New Years Day', items: [
+                    { time: '12:00', activity: 'Recovery day coverage', crew: ['crew-sam'] },
+                    { time: '16:00', activity: 'Final performances', crew: ['crew-001', 'crew-005'] },
+                    { time: '20:00', activity: 'Closing & pack down', crew: ['crew-001', 'crew-sam'] }
+                ]}
+            ]
         },
         {
             id: 'evt-005',
@@ -126,16 +182,18 @@ const DEMO_DATA = {
             paidAmount: 0,
             paymentStatus: 'pending',
             crewCount: 4,
+            crewAssigned: [],
             gearValue: 48000,
             deliverables: [
-                { type: 'Festival Documentary', duration: '12-15 min', dueDate: '2025-03-15', status: 'pending' },
-                { type: 'Highlight Reel', duration: '4 min', dueDate: '2025-03-05', status: 'pending' },
-                { type: 'Social Media Content', duration: 'Various', dueDate: '2025-02-25', status: 'pending' }
+                { id: 'del-012', type: 'Festival Documentary', duration: '12-15 min', dueDate: '2025-03-15', status: 'pending', progress: 0 },
+                { id: 'del-013', type: 'Highlight Reel', duration: '4 min', dueDate: '2025-03-05', status: 'pending', progress: 0 },
+                { id: 'del-014', type: 'Social Media Content', duration: 'Various', dueDate: '2025-02-25', status: 'pending', progress: 0 }
             ],
             tasks: 0,
             completedTasks: 0,
             notes: 'Arts & music festival with unique coastal setting. Focus on creative installations and beach activities.',
-            color: '#8b5cf6'
+            color: '#8b5cf6',
+            schedule: []
         },
         {
             id: 'evt-006',
@@ -148,20 +206,42 @@ const DEMO_DATA = {
             status: 'confirmed',
             type: 'festival',
             attendees: 7500,
-            budget: 17000,
-            quoteAmount: 15800,
-            paidAmount: 7900,
+            budget: 16000,
+            quoteAmount: 15000,
+            paidAmount: 7500,
             paymentStatus: 'deposit',
             crewCount: 5,
+            crewAssigned: ['crew-003', 'crew-006', 'crew-009', 'crew-010', 'crew-sam'],
             gearValue: 55000,
             deliverables: [
-                { type: 'After Movie', duration: '6-8 min', dueDate: '2025-01-25', status: 'pending' },
-                { type: 'Stage Recaps', duration: '3x 4min', dueDate: '2025-01-15', status: 'pending' }
+                { id: 'del-015', type: 'Festival Recap', duration: '6 min', dueDate: '2025-01-15', status: 'pending', progress: 0 },
+                { id: 'del-016', type: 'Artist Interviews', duration: '5x 3min', dueDate: '2025-01-12', status: 'pending', progress: 0 }
             ],
-            tasks: 14,
+            tasks: 16,
             completedTasks: 10,
-            notes: 'Bass music festival. Three stages plus art installations. Night shooting equipment essential.',
-            color: '#06b6d4'
+            notes: 'Bass music focused festival. Great atmosphere for crowd shots.',
+            color: '#06b6d4',
+            schedule: [
+                { date: '2024-12-29', title: 'Day 1', items: [
+                    { time: '12:00', activity: 'Gates open coverage', crew: ['crew-003', 'crew-sam'] },
+                    { time: '16:00', activity: 'Afternoon sets', crew: ['crew-003', 'crew-006'] },
+                    { time: '20:00', activity: 'Evening performances', crew: ['crew-003', 'crew-sam', 'crew-010'] }
+                ]},
+                { date: '2024-12-30', title: 'Day 2', items: [
+                    { time: '10:00', activity: 'Morning vibes', crew: ['crew-sam'] },
+                    { time: '14:00', activity: 'Artist interviews', crew: ['crew-010'] },
+                    { time: '18:00', activity: 'Sunset session', crew: ['crew-003', 'crew-006'] },
+                    { time: '22:00', activity: 'Headliners', crew: ['crew-003', 'crew-sam', 'crew-009'] }
+                ]},
+                { date: '2024-12-31', title: 'Day 3 - NYE', items: [
+                    { time: '14:00', activity: 'NYE build up', crew: ['crew-003', 'crew-sam'] },
+                    { time: '23:00', activity: 'Countdown & fireworks', crew: ['crew-003', 'crew-sam', 'crew-009', 'crew-010'] }
+                ]},
+                { date: '2025-01-01', title: 'Day 4 - Final Day', items: [
+                    { time: '12:00', activity: 'Final day atmosphere', crew: ['crew-sam'] },
+                    { time: '18:00', activity: 'Closing set', crew: ['crew-003', 'crew-006'] }
+                ]}
+            ]
         },
         {
             id: 'evt-007',
@@ -179,12 +259,14 @@ const DEMO_DATA = {
             paidAmount: 0,
             paymentStatus: 'pending',
             crewCount: 0,
+            crewAssigned: [],
             gearValue: 0,
             deliverables: [],
             tasks: 0,
             completedTasks: 0,
             notes: 'Initial inquiry. Major festival with big-name artists. Requires full production crew if confirmed.',
-            color: '#64748b'
+            color: '#64748b',
+            schedule: []
         },
         {
             id: 'evt-008',
@@ -202,15 +284,27 @@ const DEMO_DATA = {
             paidAmount: 5750,
             paymentStatus: 'deposit',
             crewCount: 4,
+            crewAssigned: ['crew-001', 'crew-002', 'crew-sam', 'crew-010'],
             gearValue: 42000,
             deliverables: [
-                { type: 'Artist Performances', duration: '8x 3min', dueDate: '2025-02-05', status: 'pending' },
-                { type: 'Festival Highlights', duration: '5 min', dueDate: '2025-02-10', status: 'pending' }
+                { id: 'del-017', type: 'Artist Performances', duration: '8x 3min', dueDate: '2025-02-05', status: 'pending', progress: 0 },
+                { id: 'del-018', type: 'Festival Highlights', duration: '5 min', dueDate: '2025-02-10', status: 'pending', progress: 0 }
             ],
             tasks: 10,
             completedTasks: 6,
             notes: 'One-day urban festival. Multiple stages in compact venue. Crowd safety priority.',
-            color: '#14b8a6'
+            color: '#14b8a6',
+            schedule: [
+                { date: '2025-01-27', title: 'Single Day Event', items: [
+                    { time: '10:00', activity: 'Setup & sound check', crew: ['crew-001', 'crew-sam'] },
+                    { time: '12:00', activity: 'Gates open', crew: ['crew-001', 'crew-sam', 'crew-010'] },
+                    { time: '14:00', activity: 'Early sets', crew: ['crew-sam', 'crew-010'] },
+                    { time: '16:00', activity: 'Main stage coverage', crew: ['crew-001', 'crew-002'] },
+                    { time: '18:00', activity: 'Golden hour drone', crew: ['crew-002'] },
+                    { time: '20:00', activity: 'Headliner', crew: ['crew-001', 'crew-sam', 'crew-002'] },
+                    { time: '22:00', activity: 'Closing & pack down', crew: ['crew-001', 'crew-sam'] }
+                ]}
+            ]
         }
     ],
 
@@ -226,53 +320,64 @@ const DEMO_DATA = {
     ],
 
     crew: [
-        { id: 'crew-001', name: 'Mike Thompson', role: 'Lead Videographer', skills: ['Camera Op', 'Directing', 'Gimbal'], rate: 450, phone: '+64 21 111 2222', email: 'mike@example.com', available: true },
-        { id: 'crew-002', name: 'Sarah Chen', role: 'Drone Operator', skills: ['Drone', 'Aerial', 'Part 102 Certified'], rate: 380, phone: '+64 27 222 3333', email: 'sarah@example.com', available: true },
-        { id: 'crew-003', name: 'James Wilson', role: 'Camera Operator', skills: ['Camera Op', '4K', 'Multi-cam'], rate: 350, phone: '+64 21 333 4444', email: 'james@example.com', available: false },
-        { id: 'crew-004', name: 'Emily Brown', role: 'Sound Recordist', skills: ['Audio', 'Field Recording', 'Mixing'], rate: 320, phone: '+64 27 444 5555', email: 'emily@example.com', available: true },
-        { id: 'crew-005', name: 'Tom Anderson', role: 'Gimbal Operator', skills: ['Gimbal', 'Stabilization', 'Tracking'], rate: 340, phone: '+64 21 555 6666', email: 'tom@example.com', available: true },
-        { id: 'crew-006', name: 'Lisa Martinez', role: 'Video Editor', skills: ['Premiere Pro', 'DaVinci', 'Color'], rate: 360, phone: '+64 27 666 7777', email: 'lisa@example.com', available: true },
-        { id: 'crew-007', name: 'David Kim', role: 'Colorist', skills: ['Color Grading', 'DaVinci', 'LUTs'], rate: 370, phone: '+64 21 777 8888', email: 'davidk@example.com', available: false },
-        { id: 'crew-008', name: 'Rachel Green', role: 'Production Assistant', skills: ['Logistics', 'Coordination', 'Admin'], rate: 280, phone: '+64 27 888 9999', email: 'rachel@example.com', available: true },
-        { id: 'crew-009', name: 'Chris Lee', role: 'Lighting Tech', skills: ['Lighting', 'Aputure', 'Setup'], rate: 310, phone: '+64 21 999 0000', email: 'chris@example.com', available: true },
-        { id: 'crew-010', name: 'Anna Taylor', role: 'Social Media Creator', skills: ['Content', 'Instagram', 'TikTok'], rate: 290, phone: '+64 27 000 1111', email: 'anna@example.com', available: true }
+        { id: 'crew-001', name: 'Mike Thompson', role: 'Lead Videographer', skills: ['Camera Op', 'Directing', 'Gimbal'], rate: 450, phone: '+64 21 111 2222', email: 'mike@example.com', available: true, owner: 'commotion' },
+        { id: 'crew-002', name: 'Sarah Chen', role: 'Drone Operator', skills: ['Drone', 'Aerial', 'Part 102 Certified'], rate: 380, phone: '+64 27 222 3333', email: 'sarah@example.com', available: true, owner: 'commotion' },
+        { id: 'crew-003', name: 'James Wilson', role: 'Camera Operator', skills: ['Camera Op', '4K', 'Multi-cam'], rate: 350, phone: '+64 21 333 4444', email: 'james@example.com', available: false, owner: 'commotion' },
+        { id: 'crew-004', name: 'Emily Brown', role: 'Sound Recordist', skills: ['Audio', 'Field Recording', 'Mixing'], rate: 320, phone: '+64 27 444 5555', email: 'emily@example.com', available: true, owner: 'commotion' },
+        { id: 'crew-005', name: 'Tom Anderson', role: 'Gimbal Operator', skills: ['Gimbal', 'Stabilization', 'Tracking'], rate: 340, phone: '+64 21 555 6666', email: 'tom@example.com', available: true, owner: 'commotion' },
+        { id: 'crew-006', name: 'Lisa Martinez', role: 'Video Editor', skills: ['Premiere Pro', 'DaVinci', 'Color'], rate: 360, phone: '+64 27 666 7777', email: 'lisa@example.com', available: true, owner: 'commotion' },
+        { id: 'crew-007', name: 'David Kim', role: 'Colorist', skills: ['Color Grading', 'DaVinci', 'LUTs'], rate: 370, phone: '+64 21 777 8888', email: 'davidk@example.com', available: false, owner: 'commotion' },
+        { id: 'crew-008', name: 'Rachel Green', role: 'Production Assistant', skills: ['Logistics', 'Coordination', 'Admin'], rate: 280, phone: '+64 27 888 9999', email: 'rachel@example.com', available: true, owner: 'commotion' },
+        { id: 'crew-009', name: 'Chris Lee', role: 'Lighting Tech', skills: ['Lighting', 'Aputure', 'Setup'], rate: 310, phone: '+64 21 999 0000', email: 'chris@example.com', available: true, owner: 'commotion' },
+        { id: 'crew-010', name: 'Anna Taylor', role: 'Social Media Creator', skills: ['Content', 'Instagram', 'TikTok'], rate: 290, phone: '+64 27 000 1111', email: 'anna@example.com', available: true, owner: 'commotion' },
+        { id: 'crew-sam', name: 'Sam King', role: 'Camera Operator', skills: ['Camera Op', 'Gimbal', 'Run & Gun', 'Festival'], rate: 380, phone: '+64 21 555 0001', email: 'sam@commotionstudio.co.nz', available: true, owner: 'commotion' }
     ],
 
     gear: [
-        { id: 'gear-001', name: 'Sony FX6 Camera #1', category: 'Camera', value: 8500, status: 'available', assignedTo: null },
-        { id: 'gear-002', name: 'Sony FX6 Camera #2', category: 'Camera', value: 8500, status: 'available', assignedTo: null },
-        { id: 'gear-003', name: 'Sony FX6 Camera #3', category: 'Camera', value: 8500, status: 'in-use', assignedTo: 'evt-003' },
-        { id: 'gear-004', name: 'DJI Ronin RS3 Pro #1', category: 'Gimbal', value: 1200, status: 'available', assignedTo: null },
-        { id: 'gear-005', name: 'DJI Ronin RS3 Pro #2', category: 'Gimbal', value: 1200, status: 'in-use', assignedTo: 'evt-004' },
-        { id: 'gear-006', name: 'DJI Mavic 3 Cine #1', category: 'Drone', value: 6500, status: 'available', assignedTo: null },
-        { id: 'gear-007', name: 'DJI Mavic 3 Cine #2', category: 'Drone', value: 6500, status: 'in-use', assignedTo: 'evt-003' },
-        { id: 'gear-008', name: 'Sony 24-70mm GM II', category: 'Lens', value: 2800, status: 'available', assignedTo: null },
-        { id: 'gear-009', name: 'Sony 70-200mm GM II', category: 'Lens', value: 3500, status: 'available', assignedTo: null },
-        { id: 'gear-010', name: 'Rode NTG5 Shotgun Mic', category: 'Audio', value: 800, status: 'in-use', assignedTo: 'evt-004' },
-        { id: 'gear-011', name: 'Zoom F6 Field Recorder', category: 'Audio', value: 900, status: 'available', assignedTo: null },
-        { id: 'gear-012', name: 'Aputure 600d Pro', category: 'Lighting', value: 1800, status: 'available', assignedTo: null },
-        { id: 'gear-013', name: 'Atomos Ninja V', category: 'Monitor', value: 900, status: 'available', assignedTo: null },
-        { id: 'gear-014', name: 'Manfrotto Tripod Kit', category: 'Support', value: 450, status: 'available', assignedTo: null },
-        { id: 'gear-015', name: 'CFexpress Card 256GB x5', category: 'Storage', value: 1500, status: 'available', assignedTo: null }
+        { id: 'gear-001', name: 'Sony FX6 Camera #1', category: 'Camera', value: 8500, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-002', name: 'Sony FX6 Camera #2', category: 'Camera', value: 8500, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-003', name: 'Sony FX6 Camera #3', category: 'Camera', value: 8500, status: 'in-use', assignedTo: 'evt-003', owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-004', name: 'DJI Ronin RS3 Pro #1', category: 'Gimbal', value: 1200, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-005', name: 'DJI Ronin RS3 Pro #2', category: 'Gimbal', value: 1200, status: 'in-use', assignedTo: 'evt-004', owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-006', name: 'DJI Mavic 3 Cine #1', category: 'Drone', value: 6500, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-007', name: 'DJI Mavic 3 Cine #2', category: 'Drone', value: 6500, status: 'in-use', assignedTo: 'evt-003', owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-008', name: 'Sony 24-70mm GM II', category: 'Lens', value: 2800, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-009', name: 'Sony 70-200mm GM II', category: 'Lens', value: 3500, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-010', name: 'Rode NTG5 Shotgun Mic', category: 'Audio', value: 800, status: 'in-use', assignedTo: 'evt-004', owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-011', name: 'Zoom F6 Field Recorder', category: 'Audio', value: 900, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-012', name: 'Aputure 600d Pro', category: 'Lighting', value: 1800, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-013', name: 'Atomos Ninja V', category: 'Monitor', value: 900, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-014', name: 'Manfrotto Tripod Kit', category: 'Support', value: 450, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-015', name: 'CFexpress Card 256GB x5', category: 'Storage', value: 1500, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+        { id: 'gear-016', name: 'Sony A7S III', category: 'Camera', value: 5200, status: 'in-use', assignedTo: 'evt-004', owner: 'Sam King', ownerId: 'crew-sam' },
+        { id: 'gear-017', name: 'Sony 16-35mm GM', category: 'Lens', value: 2800, status: 'in-use', assignedTo: 'evt-004', owner: 'Sam King', ownerId: 'crew-sam' },
+        { id: 'gear-018', name: 'DJI RS3 Mini', category: 'Gimbal', value: 650, status: 'available', assignedTo: null, owner: 'Sam King', ownerId: 'crew-sam' },
+        { id: 'gear-019', name: 'Rode Wireless GO II', category: 'Audio', value: 450, status: 'available', assignedTo: null, owner: 'Sam King', ownerId: 'crew-sam' }
     ],
 
     tasks: [
         { id: 'task-001', eventId: 'evt-001', title: 'Site recce at Cooks Beach', assignedTo: 'crew-001', dueDate: '2025-02-10', status: 'done', priority: 'high' },
         { id: 'task-002', eventId: 'evt-001', title: 'Confirm stage access passes', assignedTo: 'crew-008', dueDate: '2025-02-12', status: 'done', priority: 'high' },
         { id: 'task-003', eventId: 'evt-001', title: 'Test drone flight permissions', assignedTo: 'crew-002', dueDate: '2025-02-13', status: 'in-progress', priority: 'medium' },
-        { id: 'task-004', eventId: 'evt-001', title: 'Prepare camera packages', assignedTo: 'crew-001', dueDate: '2025-02-13', status: 'todo', priority: 'medium' },
+        { id: 'task-004', eventId: 'evt-001', title: 'Prepare camera packages', assignedTo: 'crew-sam', dueDate: '2025-02-13', status: 'todo', priority: 'medium' },
         { id: 'task-005', eventId: 'evt-003', title: 'Review stage layouts', assignedTo: 'crew-001', dueDate: '2025-01-05', status: 'in-progress', priority: 'high' },
         { id: 'task-006', eventId: 'evt-003', title: 'Edit Day 1 highlights', assignedTo: 'crew-006', dueDate: '2025-01-08', status: 'in-progress', priority: 'urgent' },
         { id: 'task-007', eventId: 'evt-004', title: 'Color grade main footage', assignedTo: 'crew-007', dueDate: '2025-01-10', status: 'in-progress', priority: 'high' },
-        { id: 'task-008', eventId: 'evt-004', title: 'Compile sponsor segments', assignedTo: 'crew-006', dueDate: '2025-01-09', status: 'todo', priority: 'medium' }
+        { id: 'task-008', eventId: 'evt-004', title: 'Compile sponsor segments', assignedTo: 'crew-006', dueDate: '2025-01-09', status: 'todo', priority: 'medium' },
+        { id: 'task-009', eventId: 'evt-004', title: 'Capture campsite atmosphere B-roll', assignedTo: 'crew-sam', dueDate: '2024-12-30', status: 'done', priority: 'medium' },
+        { id: 'task-010', eventId: 'evt-004', title: 'NYE countdown filming positions', assignedTo: 'crew-sam', dueDate: '2024-12-31', status: 'done', priority: 'high' },
+        { id: 'task-011', eventId: 'evt-006', title: 'Bass stage coverage', assignedTo: 'crew-sam', dueDate: '2024-12-30', status: 'in-progress', priority: 'high' },
+        { id: 'task-012', eventId: 'evt-006', title: 'Crowd reaction shots', assignedTo: 'crew-sam', dueDate: '2024-12-31', status: 'todo', priority: 'medium' },
+        { id: 'task-013', eventId: 'evt-008', title: 'Scout Silo Park venue', assignedTo: 'crew-sam', dueDate: '2025-01-20', status: 'todo', priority: 'medium' },
+        { id: 'task-014', eventId: 'evt-001', title: 'VIP area setup shots', assignedTo: 'crew-sam', dueDate: '2025-02-14', status: 'todo', priority: 'low' }
     ],
 
     stats: {
         totalRevenue: 142300,
         activeEvents: 8,
         completedEvents: 12,
-        totalCrew: 10,
-        gearValue: 85000,
+        totalCrew: 11,
+        gearValue: 96850,
         upcomingDeadlines: 6,
         monthlyBookings: [
             { month: 'Sep', bookings: 2 },
@@ -310,4 +415,20 @@ function getUpcomingEvents() {
 function getRecentEvents() {
     const now = new Date();
     return DEMO_DATA.events.filter(e => new Date(e.endDate) < now).sort((a, b) => new Date(b.endDate) - new Date(a.endDate));
+}
+
+function getCrewEvents(crewId) {
+    return DEMO_DATA.events.filter(e => e.crewAssigned && e.crewAssigned.includes(crewId));
+}
+
+function getCrewTasks(crewId) {
+    return DEMO_DATA.tasks.filter(t => t.assignedTo === crewId);
+}
+
+function getCrewGear(crewId) {
+    return DEMO_DATA.gear.filter(g => g.ownerId === crewId);
+}
+
+function getGearByOwner(ownerId) {
+    return DEMO_DATA.gear.filter(g => g.ownerId === ownerId);
 }
