@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COMMOTION.APP - Login</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#b93a3a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Commotion">
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Firebase SDK -->
@@ -64,18 +75,18 @@
         <!-- Login Form -->
         <form onsubmit="handleLogin(event)" class="space-y-4">
             <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Email</label>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Username or Email</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i class="fas fa-envelope text-gray-400"></i>
+                        <i class="fas fa-user text-gray-400"></i>
                     </div>
                     <input 
-                        type="email" 
+                        type="text" 
                         id="email" 
                         required
                         class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900"
-                        placeholder="Enter email"
-                        autocomplete="email"
+                        placeholder="Enter username or email"
+                        autocomplete="username"
                     >
                 </div>
             </div>
@@ -109,22 +120,27 @@
             <div class="space-y-2 text-xs text-gray-500">
                 <div class="flex justify-between">
                     <span class="font-semibold">Admin:</span>
-                    <span>jem@commotion.studio</span>
+                    <span>jem / jem@commotion.studio</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-semibold">Client:</span>
-                    <span>ethan@rhythmandalps.co.nz</span>
+                    <span>ethan / ethan@rhythmandalps.co.nz</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-semibold">Crew:</span>
-                    <span>sam@crewmail.com</span>
+                    <span>sam / sam@crewmail.com</span>
                 </div>
                 <p class="text-center text-gray-400 mt-2">Password: demo123</p>
             </div>
         </div>
+        
+        <!-- Powered by footer -->
+        <div class="mt-8 text-center">
+            <p class="text-xs text-gray-400">Powered by <a href="https://tempero.nz" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-gray-700 underline">Tempero Creative</a></p>
+        </div>
     </div>
 
-    <script src="js/firebase-config.js"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/firebase-config.js"></script>
     <script>
         // Check if already logged in
         onAuthStateChange(async (user) => {
@@ -145,7 +161,7 @@
         async function handleLogin(event) {
             event.preventDefault();
             
-            const email = document.getElementById('email').value.trim();
+            let email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
@@ -159,13 +175,25 @@
             loginSpinner.classList.remove('hidden');
             errorMessage.classList.add('hidden');
             
+            // Username to email mapping
+            const usernameMap = {
+                'jem': 'jem@commotion.studio',
+                'ethan': 'ethan@rhythmandalps.co.nz',
+                'sam': 'sam@crewmail.com'
+            };
+            
+            // Check if input is a username (no @ symbol)
+            if (!email.includes('@') && usernameMap[email.toLowerCase()]) {
+                email = usernameMap[email.toLowerCase()];
+            }
+            
             try {
                 const result = await signIn(email, password);
                 
                 if (!result.success) {
-                    let errorMsg = 'Invalid email or password';
+                    let errorMsg = 'Invalid username/email or password';
                     if (result.code === 'auth/user-not-found') {
-                        errorMsg = 'No account found with this email';
+                        errorMsg = 'No account found with this username/email';
                     } else if (result.code === 'auth/wrong-password') {
                         errorMsg = 'Incorrect password';
                     } else if (result.code === 'auth/invalid-email') {
@@ -207,19 +235,4 @@
                 if (userProfile.crewId) localStorage.setItem('crewId', userProfile.crewId);
                 
                 // Redirect to dashboard
-                window.location.href = 'dashboard.html';
-                
-            } catch (error) {
-                console.error('Login error:', error);
-                errorText.textContent = 'An error occurred. Please try again.';
-                errorMessage.classList.remove('hidden');
-                
-                loginBtn.disabled = false;
-                loginBtnText.textContent = 'SIGN IN';
-                loginSpinner.classList.add('hidden');
-            }
-        }
-    </script>
-
-</body>
-</html>
+                window.location.href = '

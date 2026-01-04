@@ -16,7 +16,7 @@ document.getElementById('userName').textContent = userName;
 document.getElementById('userRole').textContent = userRole;
 
 // Calendar state
-let currentCalendarDate = new Date(2025, 0, 5);
+let currentCalendarDate = new Date();
 let calendarView = 'month';
 
 // Global Firestore data storage
@@ -98,44 +98,44 @@ function loadAdminDashboard() {
 
             <!-- Stats Cards -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-                <div class="stat-card bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 cursor-pointer" onclick="showStatDetail('revenue')">
+                <div class="stat-card bg-white rounded-xl shadow-sm p-3 sm:p-6 border border-gray-100 cursor-pointer" onclick="showStatDetail('revenue')">
                     <div class="flex items-center justify-between">
-                        <div class="min-w-0 flex-1">
-                            <p class="text-xs sm:text-sm font-medium text-gray-600">Revenue</p>
-                            <p class="text-lg sm:text-2xl font-bold text-gray-900 mt-1">$142,300</p>
+                        <div class="min-w-0 flex-1 mr-2">
+                            <p class="text-xs sm:text-sm font-medium text-gray-600 truncate">Revenue</p>
+                            <p class="text-base sm:text-2xl font-bold text-gray-900 mt-1">$142k</p>
                             <p class="text-xs text-green-600 mt-1 hidden sm:block"><i class="fas fa-arrow-up"></i> 12%</p>
                         </div>
-                        <div class="bg-green-100 rounded-full p-2 sm:p-3 ml-2"><i class="fas fa-dollar-sign text-green-600 text-sm sm:text-xl"></i></div>
+                        <div class="bg-green-100 rounded-full w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0"><i class="fas fa-dollar-sign text-green-600 text-base sm:text-xl"></i></div>
                     </div>
                 </div>
-                <div class="stat-card bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 cursor-pointer" onclick="showStatDetail('events')">
+                <div class="stat-card bg-white rounded-xl shadow-sm p-3 sm:p-6 border border-gray-100 cursor-pointer" onclick="showStatDetail('events')">
                     <div class="flex items-center justify-between">
-                        <div class="min-w-0 flex-1">
-                            <p class="text-xs sm:text-sm font-medium text-gray-600">Events</p>
-                            <p class="text-lg sm:text-2xl font-bold text-gray-900 mt-1">${activeEvents}</p>
+                        <div class="min-w-0 flex-1 mr-2">
+                            <p class="text-xs sm:text-sm font-medium text-gray-600 truncate">Events</p>
+                            <p class="text-base sm:text-2xl font-bold text-gray-900 mt-1">${activeEvents}</p>
                             <p class="text-xs text-blue-600 mt-1 hidden sm:block"><i class="fas fa-calendar-check"></i> Active</p>
                         </div>
-                        <div class="bg-blue-100 rounded-full p-2 sm:p-3 ml-2"><i class="fas fa-calendar-alt text-blue-600 text-sm sm:text-xl"></i></div>
+                        <div class="bg-blue-100 rounded-full w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0"><i class="fas fa-calendar-alt text-blue-600 text-base sm:text-xl"></i></div>
                     </div>
                 </div>
-                <div class="stat-card bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 cursor-pointer" onclick="showStatDetail('crew')">
+                <div class="stat-card bg-white rounded-xl shadow-sm p-3 sm:p-6 border border-gray-100 cursor-pointer" onclick="showStatDetail('crew')">
                     <div class="flex items-center justify-between">
-                        <div class="min-w-0 flex-1">
-                            <p class="text-xs sm:text-sm font-medium text-gray-600">Crew</p>
-                            <p class="text-lg sm:text-2xl font-bold text-gray-900 mt-1">${FIRESTORE_DATA.crew.length}</p>
+                        <div class="min-w-0 flex-1 mr-2">
+                            <p class="text-xs sm:text-sm font-medium text-gray-600 truncate">Crew</p>
+                            <p class="text-base sm:text-2xl font-bold text-gray-900 mt-1">${FIRESTORE_DATA.crew.length}</p>
                             <p class="text-xs commotion-red mt-1 hidden sm:block"><i class="fas fa-user-check"></i> ${availableCrew} free</p>
                         </div>
-                        <div class="bg-red-100 rounded-full p-2 sm:p-3 ml-2"><i class="fas fa-users commotion-red text-sm sm:text-xl"></i></div>
+                        <div class="bg-red-100 rounded-full w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0"><i class="fas fa-users commotion-red text-base sm:text-xl"></i></div>
                     </div>
                 </div>
-                <div class="stat-card bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 cursor-pointer" onclick="showStatDetail('gear')">
+                <div class="stat-card bg-white rounded-xl shadow-sm p-3 sm:p-6 border border-gray-100 cursor-pointer" onclick="showStatDetail('gear')">
                     <div class="flex items-center justify-between">
-                        <div class="min-w-0 flex-1">
-                            <p class="text-xs sm:text-sm font-medium text-gray-600">Gear</p>
-                            <p class="text-lg sm:text-2xl font-bold text-gray-900 mt-1">$${totalGearValue.toLocaleString()}</p>
+                        <div class="min-w-0 flex-1 mr-2">
+                            <p class="text-xs sm:text-sm font-medium text-gray-600 truncate">Gear</p>
+                            <p class="text-base sm:text-2xl font-bold text-gray-900 mt-1">$${(totalGearValue/1000).toFixed(0)}k</p>
                             <p class="text-xs text-orange-600 mt-1 hidden sm:block"><i class="fas fa-shield-alt"></i> Insured</p>
                         </div>
-                        <div class="bg-orange-100 rounded-full p-2 sm:p-3 ml-2"><i class="fas fa-camera text-orange-600 text-sm sm:text-xl"></i></div>
+                        <div class="bg-orange-100 rounded-full w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0"><i class="fas fa-camera text-orange-600 text-base sm:text-xl"></i></div>
                     </div>
                 </div>
             </div>
@@ -163,12 +163,12 @@ function loadAdminDashboard() {
                     </div>
 
                     <!-- Events List -->
-                    <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 mt-4">
+                    <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 mt-4 cursor-pointer hover:shadow-md transition-shadow" onclick="showExpandedEvents()">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-                            <h2 class="text-lg sm:text-xl font-bold text-gray-900"><i class="fas fa-list mr-2 commotion-red"></i>All Events</h2>
-                            <button onclick="window.location.href='gear.html'" class="w-full sm:w-auto px-4 py-2 bg-commotion-red hover-commotion-red text-white rounded-lg text-sm font-semibold"><i class="fas fa-camera mr-2"></i>View Gear</button>
+                            <h2 class="text-lg sm:text-xl font-bold text-gray-900"><i class="fas fa-list mr-2 commotion-red"></i>All Events <span class="text-xs text-gray-400 font-normal">(click to expand)</span></h2>
+                            <button onclick="event.stopPropagation(); window.location.href='gear.html'" class="w-full sm:w-auto px-4 py-2 bg-commotion-red hover-commotion-red text-white rounded-lg text-sm font-semibold"><i class="fas fa-camera mr-2"></i>View Gear</button>
                         </div>
-                        <div id="allEvents" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                        <div id="allEvents" class="space-y-3 max-h-96 overflow-y-auto" onclick="event.stopPropagation()"></div>
                     </div>
                 </div>
 
@@ -178,8 +178,10 @@ function loadAdminDashboard() {
                         <h2 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h2>
                         <div class="space-y-2">
                             <button onclick="showModal('newEvent')" class="w-full bg-commotion-red hover-commotion-red text-white rounded-lg py-3 px-4 flex items-center justify-between text-sm"><span><i class="fas fa-plus mr-2"></i>New Event</span><i class="fas fa-arrow-right"></i></button>
+                            <button onclick="showModal('manageClients')" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg py-3 px-4 text-sm"><i class="fas fa-building mr-2"></i>Manage Clients</button>
                             <button onclick="showModal('manageCrew')" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg py-3 px-4 text-sm"><i class="fas fa-users mr-2"></i>Manage Crew</button>
                             <button onclick="window.location.href='gear.html'" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg py-3 px-4 text-sm"><i class="fas fa-camera mr-2"></i>Manage Gear</button>
+                            <button onclick="showModal('adminSettings')" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg py-3 px-4 text-sm"><i class="fas fa-cog mr-2"></i>Admin Settings</button>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100">
@@ -193,7 +195,7 @@ function loadAdminDashboard() {
                 </div>
             </div>
         </div>
-        <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
+        <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
             <div id="modalContent" class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"></div>
         </div>
     `;
@@ -723,10 +725,10 @@ function renderAllEvents() {
 
 // Modal Functions
 function showModal(type, id = null) {
-    const overlay = document.getElementById('modalOverlay');
+    const modal = document.getElementById('modal');
     const content = document.getElementById('modalContent');
-    overlay.classList.remove('hidden');
-    overlay.classList.add('flex');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
     
     switch(type) {
         case 'newEvent':
@@ -734,6 +736,12 @@ function showModal(type, id = null) {
             break;
         case 'manageCrew':
             content.innerHTML = renderManageCrewModal();
+            break;
+        case 'manageClients':
+            content.innerHTML = renderManageClientsModal();
+            break;
+        case 'adminSettings':
+            content.innerHTML = renderAdminSettingsModal();
             break;
         case 'editProfile':
             content.innerHTML = renderEditProfileModal();
@@ -752,9 +760,13 @@ function showModal(type, id = null) {
 }
 
 function closeModal() {
-    const overlay = document.getElementById('modalOverlay');
-    overlay.classList.add('hidden');
-    overlay.classList.remove('flex');
+    const modal = document.getElementById('modal');
+    const content = document.getElementById('modalContent');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    // Reset modal width
+    content.style.maxWidth = '';
+    content.style.width = '';
 }
 
 function renderNewEventModal() {
@@ -815,7 +827,84 @@ function renderManageCrewModal() {
                     </div>
                 `).join('')}
             </div>
-            <button class="w-full mt-4 px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-red-500 hover:text-red-600"><i class="fas fa-plus mr-2"></i>Add New Crew Member</button>
+            <button onclick="showAddCrewModal()" class="w-full mt-4 px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-red-500 hover:text-red-600"><i class="fas fa-plus mr-2"></i>Add New Crew Member</button>
+        </div>
+    `;
+}
+
+function renderManageClientsModal() {
+    return `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-building mr-2 commotion-red"></i>Clients</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="space-y-3 max-h-96 overflow-y-auto">
+                ${FIRESTORE_DATA.clients.map(client => `
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3"><i class="fas fa-building"></i></div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">${client.company}</h4>
+                                <p class="text-sm text-gray-600">${client.contact} • ${client.email}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="editClient('${client.id}')" class="p-2 text-gray-500 hover:text-gray-700"><i class="fas fa-edit"></i></button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <button onclick="showAddClientModal()" class="w-full mt-4 px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-red-500 hover:text-red-600"><i class="fas fa-plus mr-2"></i>Add New Client</button>
+        </div>
+    `;
+}
+
+function renderAdminSettingsModal() {
+    // Find or create admin crew profile
+    const adminCrew = FIRESTORE_DATA.crew.find(c => c.email === 'jem@commotion.studio') || { name: userName, role: 'Admin', rate: 500, phone: '', email: 'jem@commotion.studio' };
+    
+    return `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-cog mr-2 commotion-red"></i>Admin Settings</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- Profile Section -->
+                <div class="border-b pb-4">
+                    <h3 class="font-semibold text-gray-900 mb-3"><i class="fas fa-user mr-2"></i>My Profile</h3>
+                    <form onsubmit="event.preventDefault(); saveAdminProfile();" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="block text-xs font-medium text-gray-700 mb-1">Name</label><input type="text" id="adminName" value="${adminCrew.name}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-medium text-gray-700 mb-1">Role</label><input type="text" id="adminRole" value="${adminCrew.role}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="block text-xs font-medium text-gray-700 mb-1">Phone</label><input type="tel" id="adminPhone" value="${adminCrew.phone || ''}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-medium text-gray-700 mb-1">Day Rate ($)</label><input type="number" id="adminRate" value="${adminCrew.rate || 500}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></div>
+                        </div>
+                        <button type="submit" id="saveAdminBtn" class="w-full px-4 py-2 bg-commotion-red text-white rounded-lg text-sm font-semibold">Save Profile</button>
+                    </form>
+                </div>
+                
+                <!-- Password Section -->
+                <div class="border-b pb-4">
+                    <h3 class="font-semibold text-gray-900 mb-3"><i class="fas fa-key mr-2"></i>Change Password</h3>
+                    <form onsubmit="event.preventDefault(); changeAdminPassword();" class="space-y-3">
+                        <div><label class="block text-xs font-medium text-gray-700 mb-1">New Password</label><input type="password" id="newPassword" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" minlength="6"></div>
+                        <div><label class="block text-xs font-medium text-gray-700 mb-1">Confirm Password</label><input type="password" id="confirmPassword" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" minlength="6"></div>
+                        <button type="submit" id="changePasswordBtn" class="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-semibold">Update Password</button>
+                    </form>
+                </div>
+                
+                <!-- Admin Management Section -->
+                <div>
+                    <h3 class="font-semibold text-gray-900 mb-3"><i class="fas fa-user-shield mr-2"></i>Admin Access</h3>
+                    <p class="text-xs text-gray-500 mb-3">Grant admin access to crew members</p>
+                    <button onclick="showUpgradeCrewModal()" class="w-full px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-red-500 hover:text-red-600 text-sm"><i class="fas fa-user-plus mr-2"></i>Upgrade Crew to Admin</button>
+                </div>
+            </div>
         </div>
     `;
 }
@@ -1338,13 +1427,17 @@ function showExpandedCalendar() {
     const modal = document.getElementById('modal');
     const content = document.getElementById('modalContent');
     
+    // Make modal full width for calendar
+    content.style.maxWidth = '95vw';
+    content.style.width = '95vw';
+    
     content.innerHTML = `
-        <div class="p-4 sm:p-6" style="min-height: 80vh;">
+        <div class="p-4 sm:p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-calendar-alt mr-2 commotion-red"></i>Full Calendar</h2>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                <button onclick="closeExpandedModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
                 <div class="flex bg-gray-100 rounded-lg p-1">
                     <button onclick="setExpandedCalendarView('week')" id="expandedWeekBtn" class="px-3 py-2 text-sm rounded-md">Week</button>
                     <button onclick="setExpandedCalendarView('month')" id="expandedMonthBtn" class="px-3 py-2 text-sm rounded-md bg-white shadow-sm font-semibold">Month</button>
@@ -1355,7 +1448,7 @@ function showExpandedCalendar() {
                     <button onclick="navigateExpandedCalendar(1)" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"><i class="fas fa-chevron-right"></i></button>
                 </div>
             </div>
-            <div id="expandedCalendarContainer" style="min-height: 60vh;"></div>
+            <div id="expandedCalendarContainer" class="min-h-[60vh]"></div>
         </div>
     `;
     
@@ -1363,7 +1456,18 @@ function showExpandedCalendar() {
     modal.classList.add('flex');
     
     // Render expanded calendar
+    expandedCalendarDate = new Date(currentCalendarDate);
     renderExpandedCalendar();
+}
+
+function closeExpandedModal() {
+    const modal = document.getElementById('modal');
+    const content = document.getElementById('modalContent');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    // Reset modal width
+    content.style.maxWidth = '';
+    content.style.width = '';
 }
 
 let expandedCalendarDate = new Date(currentCalendarDate);
@@ -1484,4 +1588,331 @@ function logout() {
         localStorage.clear();
         window.location.href = 'index.html';
     });
+}
+
+// Expanded Events Modal
+function showExpandedEvents() {
+    const modal = document.getElementById('modal');
+    const content = document.getElementById('modalContent');
+    
+    content.style.maxWidth = '95vw';
+    content.style.width = '95vw';
+    
+    const sortedEvents = [...FIRESTORE_DATA.events].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+    
+    content.innerHTML = `
+        <div class="p-4 sm:p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-list mr-2 commotion-red"></i>All Events (${sortedEvents.length})</h2>
+                <button onclick="closeExpandedModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                ${sortedEvents.map(event => `
+                    <div class="event-card bg-white rounded-lg p-4 border border-gray-200 cursor-pointer hover:shadow-lg" style="border-left: 4px solid ${event.color}" onclick="closeExpandedModal(); viewEvent('${event.id}')">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-gray-900">${event.name}</h3>
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(event.status)}">${getStatusLabel(event.status)}</span>
+                        </div>
+                        <div class="text-sm text-gray-600 space-y-1">
+                            <p><i class="fas fa-map-marker-alt w-4"></i> ${event.location}</p>
+                            <p><i class="fas fa-calendar w-4"></i> ${formatDateRange(event.startDate, event.endDate)}</p>
+                            <p><i class="fas fa-users w-4"></i> ${event.crewCount || 0} crew</p>
+                            <p><i class="fas fa-dollar-sign w-4"></i> $${(event.quoteAmount || 0).toLocaleString()}</p>
+                        </div>
+                        <div class="mt-3 pt-3 border-t flex justify-between text-xs">
+                            <span class="text-gray-500">${event.clientName}</span>
+                            <span class="font-semibold ${event.paidAmount >= event.quoteAmount ? 'text-green-600' : 'commotion-red'}">
+                                ${Math.round((event.paidAmount / event.quoteAmount) * 100) || 0}% paid
+                            </span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+// Client Management
+function editClient(clientId) {
+    const client = FIRESTORE_DATA.clients.find(c => c.id === clientId);
+    if (!client) return;
+    
+    const modal = document.getElementById('modal');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-building mr-2 commotion-red"></i>Edit Client</h2>
+                <button onclick="showModal('manageClients')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form onsubmit="handleEditClient(event, '${client.id}')" class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Company Name</label><input type="text" id="editClientCompany" value="${client.company}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label><input type="text" id="editClientContact" value="${client.contact}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="editClientEmail" value="${client.email}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Phone</label><input type="tel" id="editClientPhone" value="${client.phone}" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" id="saveClientBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
+                    <button type="button" onclick="deleteClient('${client.id}')" class="px-4 py-3 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-semibold">Delete</button>
+                    <button type="button" onclick="showModal('manageClients')" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+async function handleEditClient(e, clientId) {
+    e.preventDefault();
+    const btn = document.getElementById('saveClientBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    
+    const updates = {
+        company: document.getElementById('editClientCompany').value,
+        contact: document.getElementById('editClientContact').value,
+        email: document.getElementById('editClientEmail').value,
+        phone: document.getElementById('editClientPhone').value
+    };
+    
+    const result = await firestoreHelpers.updateDoc('clients', clientId, updates);
+    
+    if (result.success) {
+        await loadFirestoreData();
+        showModal('manageClients');
+    } else {
+        alert('Error: ' + result.error);
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+    }
+}
+
+function showAddClientModal() {
+    const modal = document.getElementById('modal');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-plus mr-2 commotion-red"></i>Add New Client</h2>
+                <button onclick="showModal('manageClients')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form onsubmit="handleAddClient(event)" class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Company Name</label><input type="text" id="newClientCompany" required class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label><input type="text" id="newClientContact" required class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="newClientEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Phone</label><input type="tel" id="newClientPhone" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" id="addClientBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Add Client</button>
+                    <button type="button" onclick="showModal('manageClients')" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+async function handleAddClient(e) {
+    e.preventDefault();
+    const btn = document.getElementById('addClientBtn');
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
+    
+    const newClient = {
+        id: 'client-' + Date.now(),
+        company: document.getElementById('newClientCompany').value,
+        contact: document.getElementById('newClientContact').value,
+        email: document.getElementById('newClientEmail').value,
+        phone: document.getElementById('newClientPhone').value
+    };
+    
+    const result = await firestoreHelpers.setDoc('clients', newClient.id, newClient, false);
+    
+    if (result.success) {
+        await loadFirestoreData();
+        showModal('manageClients');
+    } else {
+        alert('Error: ' + result.error);
+        btn.disabled = false;
+        btn.textContent = 'Add Client';
+    }
+}
+
+async function deleteClient(clientId) {
+    const result = await firestoreHelpers.deleteDoc('clients', clientId);
+    if (result.success) {
+        await loadFirestoreData();
+        showModal('manageClients');
+    } else {
+        alert('Error: ' + result.error);
+    }
+}
+
+// Crew Management
+function showAddCrewModal() {
+    const modal = document.getElementById('modal');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-user-plus mr-2 commotion-red"></i>Add New Crew Member</h2>
+                <button onclick="showModal('manageCrew')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form onsubmit="handleAddCrew(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label><input type="text" id="newCrewName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Role</label><input type="text" id="newCrewRole" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Camera Operator"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="newCrewEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Phone</label><input type="tel" id="newCrewPhone" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                </div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Day Rate ($)</label><input type="number" id="newCrewRate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="350"></div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" id="addCrewBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Add Crew Member</button>
+                    <button type="button" onclick="showModal('manageCrew')" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+async function handleAddCrew(e) {
+    e.preventDefault();
+    const btn = document.getElementById('addCrewBtn');
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
+    
+    const newCrew = {
+        id: 'crew-' + Date.now(),
+        name: document.getElementById('newCrewName').value,
+        role: document.getElementById('newCrewRole').value,
+        email: document.getElementById('newCrewEmail').value,
+        phone: document.getElementById('newCrewPhone').value,
+        rate: parseInt(document.getElementById('newCrewRate').value),
+        available: true
+    };
+    
+    const result = await firestoreHelpers.setDoc('crew', newCrew.id, newCrew, false);
+    
+    if (result.success) {
+        await loadFirestoreData();
+        showModal('manageCrew');
+    } else {
+        alert('Error: ' + result.error);
+        btn.disabled = false;
+        btn.textContent = 'Add Crew Member';
+    }
+}
+
+// Admin Settings Functions
+async function saveAdminProfile() {
+    const btn = document.getElementById('saveAdminBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    
+    const adminCrew = FIRESTORE_DATA.crew.find(c => c.email === 'jem@commotion.studio');
+    
+    const updates = {
+        name: document.getElementById('adminName').value,
+        role: document.getElementById('adminRole').value,
+        phone: document.getElementById('adminPhone').value,
+        rate: parseInt(document.getElementById('adminRate').value)
+    };
+    
+    if (adminCrew) {
+        await firestoreHelpers.updateDoc('crew', adminCrew.id, updates);
+    } else {
+        // Create admin crew profile
+        const newAdmin = {
+            id: 'crew-admin',
+            email: 'jem@commotion.studio',
+            available: true,
+            ...updates
+        };
+        await firestoreHelpers.setDoc('crew', 'crew-admin', newAdmin, false);
+    }
+    
+    // Update localStorage
+    localStorage.setItem('userName', updates.name);
+    document.getElementById('userName').textContent = updates.name;
+    
+    await loadFirestoreData();
+    btn.textContent = 'Saved!';
+    setTimeout(() => { btn.disabled = false; btn.textContent = 'Save Profile'; }, 1500);
+}
+
+async function changeAdminPassword() {
+    const btn = document.getElementById('changePasswordBtn');
+    const newPass = document.getElementById('newPassword').value;
+    const confirmPass = document.getElementById('confirmPassword').value;
+    
+    if (newPass !== confirmPass) {
+        alert('Passwords do not match');
+        return;
+    }
+    
+    if (newPass.length < 6) {
+        alert('Password must be at least 6 characters');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = 'Updating...';
+    
+    try {
+        const user = auth.currentUser;
+        await user.updatePassword(newPass);
+        btn.textContent = 'Updated!';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'Update Password'; }, 1500);
+    } catch (error) {
+        alert('Error: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = 'Update Password';
+    }
+}
+
+function showUpgradeCrewModal() {
+    const modal = document.getElementById('modal');
+    const content = document.getElementById('modalContent');
+    
+    const nonAdminCrew = FIRESTORE_DATA.crew.filter(c => c.email !== 'jem@commotion.studio');
+    
+    content.innerHTML = `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-user-shield mr-2 commotion-red"></i>Upgrade to Admin</h2>
+                <button onclick="showModal('adminSettings')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">Select a crew member to grant admin access. They will be able to manage all events, crew, and clients.</p>
+            <div class="space-y-2 max-h-64 overflow-y-auto">
+                ${nonAdminCrew.map(crew => `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-commotion-red text-white flex items-center justify-center font-bold mr-3">${crew.name.split(' ').map(n => n[0]).join('')}</div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">${crew.name}</h4>
+                                <p class="text-xs text-gray-600">${crew.email}</p>
+                            </div>
+                        </div>
+                        <button onclick="upgradeToAdmin('${crew.id}')" class="px-3 py-1 bg-commotion-red text-white rounded-lg text-sm font-semibold">Upgrade</button>
+                    </div>
+                `).join('')}
+            </div>
+            <button onclick="showModal('adminSettings')" class="w-full mt-4 px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Back</button>
+        </div>
+    `;
+}
+
+async function upgradeToAdmin(crewId) {
+    const crew = FIRESTORE_DATA.crew.find(c => c.id === crewId);
+    if (!crew) return;
+    
+    // In a real app, this would create a Firebase Auth account and set custom claims
+    // For now, we'll just show a message about what would happen
+    alert(\`To upgrade \${crew.name} to admin:\n\n1. Create Firebase Auth account for \${crew.email}\n2. Set userRole to 'admin' in their profile\n\nThis requires Firebase Admin SDK configuration.\`);
 }
