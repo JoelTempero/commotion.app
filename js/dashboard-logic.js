@@ -222,6 +222,32 @@ function loadClientDashboard() {
                     </div>
                 </div>
             </div>
+
+            <!-- Crew Contact Info -->
+            ${mainEvent.crewAssigned && mainEvent.crewAssigned.length > 0 ? `
+                <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 mt-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4"><i class="fas fa-users mr-2 commotion-red"></i>Your Crew</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        ${mainEvent.crewAssigned.map(cId => {
+                            const crew = DEMO_DATA.crew.find(c => c.id === cId);
+                            if (!crew) return '';
+                            return `
+                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                    <div class="w-10 h-10 rounded-full bg-commotion-red text-white flex items-center justify-center font-bold mr-3 flex-shrink-0">${crew.name.split(' ').map(n => n[0]).join('')}</div>
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="font-semibold text-gray-900 text-sm">${crew.name}</h4>
+                                        <p class="text-xs text-gray-500">${crew.role}</p>
+                                        <div class="flex flex-wrap gap-2 mt-1">
+                                            <a href="tel:${crew.phone}" class="text-xs text-blue-600 hover:underline"><i class="fas fa-phone mr-1"></i>${crew.phone}</a>
+                                            <a href="mailto:${crew.email}" class="text-xs text-blue-600 hover:underline"><i class="fas fa-envelope mr-1"></i>Email</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            ` : ''}
         </div>
         <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
             <div id="modalContent" class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"></div>
@@ -299,16 +325,17 @@ function loadCrewDashboard() {
                                 return `
                                     <div class="p-3 rounded-lg border ${task.status === 'done' ? 'bg-green-50 border-green-200' : task.status === 'in-progress' ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-gray-200'}">
                                         <div class="flex items-start justify-between mb-2">
-                                            <div class="flex items-start flex-1">
-                                                <input type="checkbox" ${task.status === 'done' ? 'checked' : ''} onchange="toggleTaskStatus('${task.id}')" class="mr-3 mt-1 w-4 h-4 cursor-pointer accent-red-600">
-                                                <div class="min-w-0">
-                                                    <h4 class="font-semibold text-gray-900 text-sm ${task.status === 'done' ? 'line-through text-gray-500' : ''}">${task.title}</h4>
-                                                    <p class="text-xs text-gray-600 mt-1">${event ? event.name : 'Event'}</p>
-                                                </div>
+                                            <div class="flex-1 min-w-0">
+                                                <h4 class="font-semibold text-gray-900 text-sm ${task.status === 'done' ? 'line-through text-gray-500' : ''}">${task.title}</h4>
+                                                <p class="text-xs text-gray-600 mt-1">${event ? event.name : 'Event'}</p>
                                             </div>
-                                            <span class="px-2 py-1 rounded-full text-xs font-semibold ml-2 whitespace-nowrap ${getTaskStatusBadgeClass(task.status)}">${task.status.toUpperCase().replace('-', ' ')}</span>
+                                            <select onchange="updateTaskStatus('${task.id}', this.value)" class="ml-2 text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer ${task.status === 'done' ? 'bg-green-100 text-green-700' : task.status === 'in-progress' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}">
+                                                <option value="todo" ${task.status === 'todo' ? 'selected' : ''}>TODO</option>
+                                                <option value="in-progress" ${task.status === 'in-progress' ? 'selected' : ''}>IN PROGRESS</option>
+                                                <option value="done" ${task.status === 'done' ? 'selected' : ''}>DONE</option>
+                                            </select>
                                         </div>
-                                        <div class="ml-7 text-xs text-gray-500">
+                                        <div class="text-xs text-gray-500">
                                             <i class="fas fa-calendar mr-1"></i> Due: ${new Date(task.dueDate).toLocaleDateString('en-NZ', {month: 'short', day: 'numeric'})}
                                             ${task.priority ? ` | <span class="${task.priority === 'urgent' ? 'text-red-600 font-semibold' : task.priority === 'high' ? 'commotion-red' : ''}">${task.priority}</span>` : ''}
                                         </div>
@@ -321,9 +348,12 @@ function loadCrewDashboard() {
             </div>
 
             <!-- My Gear -->
-            ${myGear.length > 0 ? `
-                <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 mt-4">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4"><i class="fas fa-camera mr-2 commotion-red"></i>My Gear</h2>
+            <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 mt-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-900"><i class="fas fa-camera mr-2 commotion-red"></i>My Gear</h2>
+                    <button onclick="showModal('addGear')" class="text-sm text-red-600 hover:text-red-700 font-semibold"><i class="fas fa-plus mr-1"></i>Add Gear</button>
+                </div>
+                ${myGear.length > 0 ? `
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         ${myGear.map(gear => `
                             <div class="p-3 bg-gray-50 rounded-lg">
@@ -336,8 +366,8 @@ function loadCrewDashboard() {
                             </div>
                         `).join('')}
                     </div>
-                </div>
-            ` : ''}
+                ` : `<div class="text-center py-6 text-gray-500"><p>No gear registered yet. Add your equipment to make it available for events.</p></div>`}
+            </div>
 
             <!-- Profile -->
             <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 mt-4">
@@ -393,13 +423,45 @@ function renderMonthView(container) {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date();
+    const isMobile = window.innerWidth < 640;
     
+    // On mobile, show a list view instead of grid
+    if (isMobile) {
+        let html = '<div class="space-y-2">';
+        const eventsThisMonth = DEMO_DATA.events.filter(e => {
+            const start = new Date(e.startDate);
+            const end = new Date(e.endDate);
+            return (start.getMonth() === month && start.getFullYear() === year) || 
+                   (end.getMonth() === month && end.getFullYear() === year) ||
+                   (start <= new Date(year, month, 1) && end >= new Date(year, month + 1, 0));
+        });
+        
+        if (eventsThisMonth.length === 0) {
+            html += '<div class="text-center py-8 text-gray-500">No events this month</div>';
+        } else {
+            eventsThisMonth.forEach(e => {
+                html += `<div class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100" onclick="viewEvent('${e.id}')">
+                    <div class="w-3 h-3 rounded-full mr-3 flex-shrink-0" style="background-color: ${e.color}"></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-sm text-gray-900 truncate">${e.name}</p>
+                        <p class="text-xs text-gray-500">${formatDateRange(e.startDate, e.endDate)}</p>
+                    </div>
+                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(e.status)} ml-2">${getStatusLabel(e.status)}</span>
+                </div>`;
+            });
+        }
+        html += '</div>';
+        container.innerHTML = html;
+        return;
+    }
+    
+    // Desktop grid view
     let html = `<div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-600 mb-2">
         <div class="py-2">S</div><div class="py-2">M</div><div class="py-2">T</div><div class="py-2">W</div><div class="py-2">T</div><div class="py-2">F</div><div class="py-2">S</div>
     </div><div class="grid grid-cols-7 gap-1">`;
     
     for (let i = 0; i < firstDay; i++) {
-        html += '<div class="calendar-day bg-gray-50 min-h-[60px] sm:min-h-[80px]"></div>';
+        html += '<div class="calendar-day bg-gray-50 min-h-[80px]"></div>';
     }
     
     for (let day = 1; day <= daysInMonth; day++) {
@@ -407,7 +469,7 @@ function renderMonthView(container) {
         const eventsOnDay = DEMO_DATA.events.filter(e => dateStr >= e.startDate && dateStr <= e.endDate);
         const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
         
-        html += `<div class="calendar-day ${isToday ? 'bg-red-50 border-red-200' : 'bg-white'} min-h-[60px] sm:min-h-[80px] border border-gray-200 rounded">
+        html += `<div class="calendar-day ${isToday ? 'bg-red-50 border-red-200' : 'bg-white'} min-h-[80px] border border-gray-200 rounded">
             <div class="p-1">
                 <div class="text-right text-xs font-semibold ${isToday ? 'text-red-600' : 'text-gray-700'}">${day}</div>
                 <div class="mt-1 space-y-1">
@@ -424,10 +486,84 @@ function renderMonthView(container) {
 
 function renderWeekView(container) {
     const weekStart = getWeekStart(currentCalendarDate);
-    const hours = ['06:00','08:00','10:00','12:00','14:00','16:00','18:00','20:00','22:00'];
     const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const isMobile = window.innerWidth < 640;
     
-    let html = `<div class="overflow-x-auto"><div class="min-w-[600px]">
+    // Collect all schedule items for the week
+    let weekSchedule = [];
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(weekStart);
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        DEMO_DATA.events.forEach(evt => {
+            if (evt.schedule && dateStr >= evt.startDate && dateStr <= evt.endDate) {
+                const daySchedule = evt.schedule.find(s => s.date === dateStr);
+                if (daySchedule) {
+                    daySchedule.items.forEach(item => {
+                        weekSchedule.push({
+                            ...item,
+                            date: dateStr,
+                            dayIndex: i,
+                            eventName: evt.name,
+                            eventId: evt.id,
+                            eventColor: evt.color
+                        });
+                    });
+                }
+            }
+        });
+    }
+    
+    // Mobile: list view
+    if (isMobile) {
+        let html = '<div class="space-y-4">';
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(weekStart);
+            date.setDate(date.getDate() + i);
+            const dateStr = date.toISOString().split('T')[0];
+            const isToday = date.toDateString() === new Date().toDateString();
+            const dayItems = weekSchedule.filter(s => s.dayIndex === i).sort((a,b) => a.time.localeCompare(b.time));
+            const eventsOnDay = DEMO_DATA.events.filter(e => dateStr >= e.startDate && dateStr <= e.endDate);
+            
+            if (eventsOnDay.length > 0 || dayItems.length > 0) {
+                html += `<div class="border-l-4 ${isToday ? 'border-red-500 bg-red-50' : 'border-gray-300'} pl-3 py-2 rounded-r">
+                    <div class="font-semibold text-sm ${isToday ? 'text-red-600' : 'text-gray-700'}">${dayNames[i]} ${date.getDate()}</div>`;
+                
+                if (dayItems.length > 0) {
+                    html += '<div class="mt-2 space-y-1">';
+                    dayItems.forEach(item => {
+                        html += `<div class="flex items-start text-xs cursor-pointer hover:bg-white p-1 rounded" onclick="viewEvent('${item.eventId}')">
+                            <span class="font-semibold commotion-red w-12 flex-shrink-0">${item.time}</span>
+                            <div class="flex-1">
+                                <span class="text-gray-900">${item.activity}</span>
+                                <span class="text-gray-400 ml-1">(${item.eventName.split(' ')[0]})</span>
+                            </div>
+                        </div>`;
+                    });
+                    html += '</div>';
+                } else {
+                    eventsOnDay.forEach(e => {
+                        html += `<div class="mt-1 text-xs text-gray-600 cursor-pointer" onclick="viewEvent('${e.id}')"><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:${e.color}"></span>${e.name}</div>`;
+                    });
+                }
+                html += '</div>';
+            }
+        }
+        if (weekSchedule.length === 0 && DEMO_DATA.events.filter(e => {
+            for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(d.getDate()+i);const ds=d.toISOString().split('T')[0];if(ds>=e.startDate&&ds<=e.endDate)return true;}return false;
+        }).length === 0) {
+            html += '<div class="text-center py-8 text-gray-500">No events this week</div>';
+        }
+        html += '</div>';
+        container.innerHTML = html;
+        return;
+    }
+    
+    // Desktop: time grid with schedule items
+    const hours = ['06:00','08:00','10:00','12:00','14:00','16:00','18:00','20:00','22:00'];
+    
+    let html = `<div class="overflow-x-auto"><div class="min-w-[700px]">
         <div class="grid grid-cols-8 border-b">
             <div class="p-2 text-xs font-semibold text-gray-500"></div>`;
     
@@ -443,16 +579,36 @@ function renderWeekView(container) {
     html += '</div>';
     
     hours.forEach(hour => {
-        html += `<div class="grid grid-cols-8 border-b"><div class="p-2 text-xs text-gray-500 text-right pr-3">${hour}</div>`;
+        const hourNum = parseInt(hour.split(':')[0]);
+        html += `<div class="grid grid-cols-8 border-b"><div class="p-1 text-xs text-gray-400 text-right pr-2">${hour}</div>`;
+        
         for (let i = 0; i < 7; i++) {
             const date = new Date(weekStart);
             date.setDate(date.getDate() + i);
             const dateStr = date.toISOString().split('T')[0];
+            
+            // Find schedule items for this hour
+            const items = weekSchedule.filter(s => {
+                const itemHour = parseInt(s.time.split(':')[0]);
+                return s.dayIndex === i && itemHour >= hourNum && itemHour < hourNum + 2;
+            });
+            
+            // Find events on this day
             const eventsOnDay = DEMO_DATA.events.filter(e => dateStr >= e.startDate && dateStr <= e.endDate);
-            const event = eventsOnDay[0];
-            html += `<div class="p-1 border-l min-h-[40px] ${event ? 'cursor-pointer' : ''}" ${event ? `onclick="viewEvent('${event.id}')"` : ''}>
-                ${event && hour === '10:00' ? `<div class="text-xs p-1 rounded text-white truncate" style="background-color: ${event.color}">${event.name.split(' ')[0]}</div>` : ''}
-            </div>`;
+            
+            html += `<div class="border-l min-h-[50px] p-1">`;
+            if (items.length > 0) {
+                items.forEach(item => {
+                    html += `<div class="text-xs p-1 mb-1 rounded cursor-pointer text-white" style="background-color: ${item.eventColor}" onclick="viewEvent('${item.eventId}')">
+                        <span class="font-semibold">${item.time}</span> ${item.activity.substring(0, 15)}${item.activity.length > 15 ? '...' : ''}
+                    </div>`;
+                });
+            } else if (eventsOnDay.length > 0 && hour === '10:00') {
+                eventsOnDay.forEach(e => {
+                    html += `<div class="text-xs p-1 rounded text-white truncate cursor-pointer" style="background-color: ${e.color}" onclick="viewEvent('${e.id}')">${e.name.split(' ')[0]}</div>`;
+                });
+            }
+            html += '</div>';
         }
         html += '</div>';
     });
@@ -522,6 +678,9 @@ function showModal(type, id = null) {
             break;
         case 'editProfile':
             content.innerHTML = renderEditProfileModal();
+            break;
+        case 'addGear':
+            content.innerHTML = renderAddGearModal();
             break;
         case 'editSchedule':
         case 'eventSchedule':
@@ -630,6 +789,52 @@ function renderEditProfileModal() {
     `;
 }
 
+function renderAddGearModal() {
+    const crewMember = DEMO_DATA.crew.find(c => c.id === crewId) || { name: userName };
+    return `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-camera mr-2 commotion-red"></i>Add My Gear</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">Add your personal equipment to make it available for event assignments. This will appear in the admin gear inventory.</p>
+            <form onsubmit="event.preventDefault(); saveNewGear();" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Equipment Name</label>
+                    <input type="text" id="newGearName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="e.g. Sony A7S III" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <select id="newGearCategory" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="Camera">Camera</option>
+                            <option value="Lens">Lens</option>
+                            <option value="Drone">Drone</option>
+                            <option value="Gimbal">Gimbal</option>
+                            <option value="Audio">Audio</option>
+                            <option value="Lighting">Lighting</option>
+                            <option value="Monitor">Monitor</option>
+                            <option value="Support">Support</option>
+                            <option value="Storage">Storage</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Insurance Value ($)</label>
+                        <input type="number" id="newGearValue" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="5000" required>
+                    </div>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p class="text-xs text-blue-800"><i class="fas fa-info-circle mr-1"></i>Owner will be set to: <strong>${crewMember.name}</strong></p>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">Add Gear</button>
+                    <button type="button" onclick="closeModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
 function renderScheduleModal(event) {
     if (!event) return '<div class="p-6"><p>Event not found</p></div>';
     const isClient = userRole === 'client';
@@ -648,7 +853,7 @@ function renderScheduleModal(event) {
                             <div class="space-y-2">
                                 ${day.items.map(item => `
                                     <div class="flex items-start p-3 bg-gray-50 rounded-lg ${isClient ? 'cursor-pointer hover:bg-gray-100' : ''}" ${isClient ? `onclick="editScheduleItem('${event.id}', '${day.date}', '${item.time}')"` : ''}>
-                                        <span class="text-sm font-mono font-semibold commotion-red w-14 flex-shrink-0">${item.time}</span>
+                                        <span class="text-sm font-semibold commotion-red w-14 flex-shrink-0">${item.time}</span>
                                         <div class="flex-1">
                                             <p class="text-sm font-medium text-gray-900">${item.activity}</p>
                                             ${item.crew && item.crew.length > 0 ? `<p class="text-xs text-gray-500 mt-1"><i class="fas fa-users mr-1"></i>${item.crew.map(c => DEMO_DATA.crew.find(cr => cr.id === c)?.name || c).join(', ')}</p>` : ''}
@@ -678,7 +883,7 @@ function renderEventSchedule(event) {
                 <div class="mt-2 space-y-1">
                     ${day.items.slice(0, 3).map(item => `
                         <div class="flex items-center text-xs text-gray-600">
-                            <span class="font-mono w-12">${item.time}</span>
+                            <span class="font-semibold w-12 commotion-red">${item.time}</span>
                             <span>${item.activity}</span>
                         </div>
                     `).join('')}
@@ -850,6 +1055,14 @@ function toggleTaskStatus(taskId) {
     const task = DEMO_DATA.tasks.find(t => t.id === taskId);
     if (task) {
         task.status = task.status === 'done' ? 'todo' : 'done';
+        if (userRole === 'crew') loadCrewDashboard();
+    }
+}
+
+function updateTaskStatus(taskId, newStatus) {
+    const task = DEMO_DATA.tasks.find(t => t.id === taskId);
+    if (task) {
+        task.status = newStatus;
         // Refresh the view
         if (userRole === 'crew') loadCrewDashboard();
     }
@@ -863,6 +1076,30 @@ function saveNewEvent() {
 function saveProfile() {
     alert('Profile updated! (Demo mode - data not persisted)\n\nIn production, this would save to Firebase.');
     closeModal();
+}
+
+function saveNewGear() {
+    const name = document.getElementById('newGearName').value;
+    const category = document.getElementById('newGearCategory').value;
+    const value = parseInt(document.getElementById('newGearValue').value);
+    const crewMember = DEMO_DATA.crew.find(c => c.id === crewId);
+    
+    // Add to demo data (will show until page refresh)
+    const newGear = {
+        id: 'gear-' + Date.now(),
+        name: name,
+        category: category,
+        value: value,
+        status: 'available',
+        assignedTo: null,
+        owner: crewMember ? crewMember.name : userName,
+        ownerId: crewId
+    };
+    DEMO_DATA.gear.push(newGear);
+    
+    alert(`Gear added: ${name}\n\nThis will appear in your gear list and the admin inventory.\n\n(Demo mode - will reset on page refresh. In production, this would save to Firebase.)`);
+    closeModal();
+    loadCrewDashboard();
 }
 
 function editCrew(crewId) {
