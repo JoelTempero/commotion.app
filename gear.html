@@ -202,7 +202,7 @@
                             </div>
                             <div class="flex justify-between">
                                 <span>Owner:</span>
-                                <span class="font-semibold ${gear.ownerId === 'commotion' ? 'commotion-red' : 'text-blue-600'}">${gear.owner}</span>
+                                <span class="font-semibold ${gear.ownerId === 'commotion' ? 'commotion-red' : 'text-blue-600'}">${gear.ownerId === 'commotion' ? 'Jem AG' : gear.owner}</span>
                             </div>
                             ${!isAvailable && assignedEvent ? `
                                 <div class="flex justify-between">
@@ -258,10 +258,12 @@
         }
 
         function showGearDetail(gearId) {
-            const gear = DEMO_DATA.gear.find(g => g.id === gearId);
+            const gear = gearData.find(g => g.id === gearId);
             if (!gear) return;
             
-            const assignedEvent = gear.assignedTo ? DEMO_DATA.events.find(e => e.id === gear.assignedTo) : null;
+            const assignedEvent = gear.assignedTo ? eventsData.find(e => e.id === gear.assignedTo) : null;
+            // Change "Commotion Studio" to "Jem Anderson-Gardner" for admin-owned gear
+            const ownerDisplay = gear.ownerId === 'commotion' ? 'Jem Anderson-Gardner' : gear.owner;
             const modal = document.getElementById('gearModal');
             const content = document.getElementById('gearModalContent');
             
@@ -289,7 +291,7 @@
                         
                         <div class="bg-gray-50 rounded-lg p-4">
                             <p class="text-xs text-gray-500 mb-1">Owner</p>
-                            <p class="font-semibold ${gear.ownerId === 'commotion' ? 'commotion-red' : 'text-blue-600'}">${gear.owner}</p>
+                            <p class="font-semibold ${gear.ownerId === 'commotion' ? 'commotion-red' : 'text-blue-600'}">${ownerDisplay}</p>
                         </div>
                         
                         ${assignedEvent ? `
@@ -302,11 +304,14 @@
                         
                         ${userRole === 'admin' ? `
                             <div class="flex gap-3 pt-4">
-                                <button onclick="alert('Edit gear (Demo mode)')" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">
+                                <button onclick="showEditGearModal('${gear.id}')" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">
                                     <i class="fas fa-edit mr-2"></i>Edit
                                 </button>
-                                <button onclick="alert('Assign gear (Demo mode)')" class="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">
+                                <button onclick="showAssignGearModal('${gear.id}')" class="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">
                                     <i class="fas fa-link mr-2"></i>Assign
+                                </button>
+                                <button onclick="deleteGear('${gear.id}')" class="px-4 py-3 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-semibold">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         ` : ''}
@@ -316,6 +321,143 @@
             
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+        }
+        
+        function showEditGearModal(gearId) {
+            const gear = gearData.find(g => g.id === gearId);
+            if (!gear) return;
+            
+            const modal = document.getElementById('gearModal');
+            const content = document.getElementById('gearModalContent');
+            
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-edit mr-2 commotion-red"></i>Edit Gear</h2>
+                        <button onclick="closeGearModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="handleEditGear(event, '${gear.id}')" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <input type="text" id="editGearName" value="${gear.name}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                <select id="editGearCategory" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                    <option ${gear.category === 'Camera' ? 'selected' : ''}>Camera</option>
+                                    <option ${gear.category === 'Lens' ? 'selected' : ''}>Lens</option>
+                                    <option ${gear.category === 'Drone' ? 'selected' : ''}>Drone</option>
+                                    <option ${gear.category === 'Gimbal' ? 'selected' : ''}>Gimbal</option>
+                                    <option ${gear.category === 'Audio' ? 'selected' : ''}>Audio</option>
+                                    <option ${gear.category === 'Lighting' ? 'selected' : ''}>Lighting</option>
+                                    <option ${gear.category === 'Monitor' ? 'selected' : ''}>Monitor</option>
+                                    <option ${gear.category === 'Support' ? 'selected' : ''}>Support</option>
+                                    <option ${gear.category === 'Storage' ? 'selected' : ''}>Storage</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Value ($)</label>
+                                <input type="number" id="editGearValue" value="${gear.value}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" id="saveGearBtn" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
+                            <button type="button" onclick="closeGearModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+        }
+        
+        async function handleEditGear(e, gearId) {
+            e.preventDefault();
+            const btn = document.getElementById('saveGearBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
+            const updates = {
+                name: document.getElementById('editGearName').value,
+                category: document.getElementById('editGearCategory').value,
+                value: parseInt(document.getElementById('editGearValue').value)
+            };
+            
+            const result = await firestoreHelpers.updateDoc('gear', gearId, updates);
+            
+            if (result.success) {
+                closeGearModal();
+                await loadGearData();
+            } else {
+                alert('Error updating gear: ' + result.error);
+                btn.disabled = false;
+                btn.textContent = 'Save Changes';
+            }
+        }
+        
+        function showAssignGearModal(gearId) {
+            const gear = gearData.find(g => g.id === gearId);
+            if (!gear) return;
+            
+            const activeEvents = eventsData.filter(e => e.status !== 'completed' && e.status !== 'cancelled');
+            const modal = document.getElementById('gearModal');
+            const content = document.getElementById('gearModalContent');
+            
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-link mr-2 commotion-red"></i>Assign ${gear.name}</h2>
+                        <button onclick="closeGearModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="handleAssignGearToEvent(event, '${gear.id}')" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Assign to Event</label>
+                            <select id="assignToEvent" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="">-- Not Assigned (Available) --</option>
+                                ${activeEvents.map(e => `<option value="${e.id}" ${gear.assignedTo === e.id ? 'selected' : ''}>${e.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" id="assignGearBtn" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">Save Assignment</button>
+                            <button type="button" onclick="closeGearModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+        }
+        
+        async function handleAssignGearToEvent(e, gearId) {
+            e.preventDefault();
+            const btn = document.getElementById('assignGearBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
+            const eventId = document.getElementById('assignToEvent').value;
+            const updates = {
+                assignedTo: eventId || null,
+                status: eventId ? 'in-use' : 'available'
+            };
+            
+            const result = await firestoreHelpers.updateDoc('gear', gearId, updates);
+            
+            if (result.success) {
+                closeGearModal();
+                await loadGearData();
+            } else {
+                alert('Error assigning gear: ' + result.error);
+                btn.disabled = false;
+                btn.textContent = 'Save Assignment';
+            }
+        }
+        
+        async function deleteGear(gearId) {
+            const result = await firestoreHelpers.deleteDoc('gear', gearId);
+            
+            if (result.success) {
+                closeGearModal();
+                await loadGearData();
+            } else {
+                alert('Error deleting gear: ' + result.error);
+            }
         }
 
         function closeGearModal() {
@@ -334,33 +476,34 @@
                         <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-plus mr-2 commotion-red"></i>Add New Gear</h2>
                         <button onclick="closeGearModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
                     </div>
-                    <form onsubmit="event.preventDefault(); alert('Gear added (Demo mode)'); closeGearModal();" class="space-y-4">
+                    <form onsubmit="handleAddNewGear(event)" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Sony FX6 Camera #4" required>
+                            <input type="text" id="newGearName" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Sony FX6 Camera #4" required>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <select id="newGearCategory" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
                                     <option>Camera</option><option>Lens</option><option>Drone</option>
                                     <option>Gimbal</option><option>Audio</option><option>Lighting</option>
+                                    <option>Monitor</option><option>Support</option><option>Storage</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Value ($)</label>
-                                <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="8500" required>
+                                <input type="number" id="newGearValue" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="8500" required>
                             </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Owner</label>
-                            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                                <option value="commotion">Commotion Studio</option>
-                                <option value="crew-sam">Sam King</option>
+                            <select id="newGearOwner" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="commotion" data-name="Jem Anderson-Gardner">Jem Anderson-Gardner (Commotion)</option>
+                                ${gearData.filter((g, i, arr) => arr.findIndex(x => x.ownerId === g.ownerId) === i && g.ownerId !== 'commotion').map(g => `<option value="${g.ownerId}" data-name="${g.owner}">${g.owner}</option>`).join('')}
                             </select>
                         </div>
                         <div class="flex gap-3 pt-4">
-                            <button type="submit" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">Add Gear</button>
+                            <button type="submit" id="addNewGearBtn" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">Add Gear</button>
                             <button type="button" onclick="closeGearModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
                         </div>
                     </form>
@@ -369,6 +512,39 @@
             
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+        }
+        
+        async function handleAddNewGear(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addNewGearBtn');
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+            
+            const ownerSelect = document.getElementById('newGearOwner');
+            const ownerId = ownerSelect.value;
+            const ownerName = ownerSelect.options[ownerSelect.selectedIndex].dataset.name;
+            
+            const newGear = {
+                id: 'gear-' + Date.now(),
+                name: document.getElementById('newGearName').value,
+                category: document.getElementById('newGearCategory').value,
+                value: parseInt(document.getElementById('newGearValue').value),
+                status: 'available',
+                assignedTo: null,
+                owner: ownerId === 'commotion' ? 'Commotion Studio' : ownerName,
+                ownerId: ownerId
+            };
+            
+            const result = await firestoreHelpers.setDoc('gear', newGear.id, newGear, false);
+            
+            if (result.success) {
+                closeGearModal();
+                await loadGearData();
+            } else {
+                alert('Error adding gear: ' + result.error);
+                btn.disabled = false;
+                btn.textContent = 'Add Gear';
+            }
         }
 
         function logout() {

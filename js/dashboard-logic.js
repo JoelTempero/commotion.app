@@ -85,6 +85,7 @@ function loadAdminDashboard() {
     const totalGearValue = FIRESTORE_DATA.gear.reduce((sum, g) => sum + g.value, 0);
     const activeEvents = FIRESTORE_DATA.events.filter(e => e.status !== 'completed' && e.status !== 'cancelled').length;
     const availableCrew = FIRESTORE_DATA.crew.filter(c => c.available).length;
+    const today = new Date().toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     
     document.getElementById('dashboardContent').innerHTML = `
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -92,6 +93,7 @@ function loadAdminDashboard() {
             <div class="mb-6 sm:mb-8">
                 <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
                 <p class="text-gray-600 mt-1 text-sm sm:text-base">Welcome back, ${userName}.</p>
+                <p class="text-gray-400 text-xs sm:text-sm">${today}</p>
             </div>
 
             <!-- Stats Cards -->
@@ -142,22 +144,22 @@ function loadAdminDashboard() {
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
                 <div class="lg:col-span-2">
                     <!-- Calendar -->
-                    <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100">
+                    <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-shadow" onclick="showExpandedCalendar()">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-                            <h2 class="text-lg sm:text-xl font-bold text-gray-900"><i class="fas fa-calendar-alt mr-2 commotion-red"></i>Calendar</h2>
-                            <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+                            <h2 class="text-lg sm:text-xl font-bold text-gray-900"><i class="fas fa-calendar-alt mr-2 commotion-red"></i>Calendar <span class="text-xs text-gray-400 font-normal">(click to expand)</span></h2>
+                            <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap" onclick="event.stopPropagation()">
                                 <div class="flex bg-gray-100 rounded-lg p-1">
-                                    <button onclick="setCalendarView('week')" id="weekViewBtn" class="px-2 py-1 text-xs rounded-md">Week</button>
-                                    <button onclick="setCalendarView('month')" id="monthViewBtn" class="px-2 py-1 text-xs rounded-md bg-white shadow-sm font-semibold">Month</button>
+                                    <button onclick="event.stopPropagation(); setCalendarView('week')" id="weekViewBtn" class="px-2 py-1 text-xs rounded-md">Week</button>
+                                    <button onclick="event.stopPropagation(); setCalendarView('month')" id="monthViewBtn" class="px-2 py-1 text-xs rounded-md bg-white shadow-sm font-semibold">Month</button>
                                 </div>
                                 <div class="flex items-center gap-1 ml-auto sm:ml-0">
-                                    <button onclick="navigateCalendar(-1)" class="px-2 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"><i class="fas fa-chevron-left"></i></button>
+                                    <button onclick="event.stopPropagation(); navigateCalendar(-1)" class="px-2 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"><i class="fas fa-chevron-left"></i></button>
                                     <span class="px-2 py-1 text-xs sm:text-sm font-semibold min-w-[90px] text-center" id="calendarTitle"></span>
-                                    <button onclick="navigateCalendar(1)" class="px-2 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"><i class="fas fa-chevron-right"></i></button>
+                                    <button onclick="event.stopPropagation(); navigateCalendar(1)" class="px-2 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"><i class="fas fa-chevron-right"></i></button>
                                 </div>
                             </div>
                         </div>
-                        <div id="calendarContainer" class="overflow-x-auto"></div>
+                        <div id="calendarContainer" class="overflow-x-auto" onclick="event.stopPropagation()"></div>
                     </div>
 
                     <!-- Events List -->
@@ -314,30 +316,34 @@ function loadCrewDashboard() {
     const assignedTasks = FIRESTORE_DATA.tasks.filter(t => t.assignedTo === crewId);
     const myGear = FIRESTORE_DATA.gear.filter(g => g.ownerId === crewId);
     const pendingTasks = assignedTasks.filter(t => t.status !== 'done').length;
-    const upcomingEvents = assignedEvents.filter(e => new Date(e.startDate) > new Date('2025-01-03')).length;
+    const today = new Date().toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
     document.getElementById('dashboardContent').innerHTML = `
         <div class="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
-            <div class="mb-6"><h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Crew Portal</h1><p class="text-gray-600 mt-1">Welcome back, ${userName}.</p></div>
+            <div class="mb-6">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Crew Portal</h1>
+                <p class="text-gray-600 mt-1">Welcome back, ${userName}.</p>
+                <p class="text-gray-400 text-xs sm:text-sm">${today}</p>
+            </div>
 
             <!-- Stats -->
             <div class="grid grid-cols-3 gap-3 sm:gap-6 mb-6">
                 <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100">
                     <div class="flex items-center justify-between">
-                        <div><p class="text-xs sm:text-sm font-medium text-gray-600">Events</p><p class="text-lg sm:text-2xl font-bold text-gray-900 mt-1">${upcomingEvents}</p></div>
-                        <div class="bg-blue-100 rounded-full p-2 sm:p-3"><i class="fas fa-calendar-check text-blue-600 text-sm sm:text-xl"></i></div>
+                        <div><p class="text-xs sm:text-sm font-medium text-gray-600">Events</p><p class="text-lg sm:text-2xl font-bold text-gray-900 mt-1">${assignedEvents.length}</p></div>
+                        <div class="bg-blue-100 rounded-full p-2 sm:p-3 flex-shrink-0 w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center"><i class="fas fa-calendar-check text-blue-600 text-sm sm:text-xl"></i></div>
                     </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100">
                     <div class="flex items-center justify-between">
                         <div><p class="text-xs sm:text-sm font-medium text-gray-600">Tasks</p><p class="text-lg sm:text-2xl font-bold text-gray-900 mt-1">${pendingTasks}</p></div>
-                        <div class="bg-orange-100 rounded-full p-2 sm:p-3"><i class="fas fa-tasks text-orange-600 text-sm sm:text-xl"></i></div>
+                        <div class="bg-orange-100 rounded-full p-2 sm:p-3 flex-shrink-0 w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center"><i class="fas fa-tasks text-orange-600 text-sm sm:text-xl"></i></div>
                     </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100">
                     <div class="flex items-center justify-between">
                         <div><p class="text-xs sm:text-sm font-medium text-gray-600">Rate</p><p class="text-lg sm:text-2xl font-bold text-gray-900 mt-1">$${crewMember.rate}</p></div>
-                        <div class="bg-green-100 rounded-full p-2 sm:p-3"><i class="fas fa-dollar-sign text-green-600 text-sm sm:text-xl"></i></div>
+                        <div class="bg-green-100 rounded-full p-2 sm:p-3 flex-shrink-0 w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center"><i class="fas fa-dollar-sign text-green-600 text-sm sm:text-xl"></i></div>
                     </div>
                 </div>
             </div>
@@ -1249,45 +1255,47 @@ function editCrew(crewMemberId) {
     const modal = document.getElementById('modal');
     const content = document.getElementById('modalContent');
     content.innerHTML = `
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-user-edit mr-2 commotion-red"></i>Edit Crew Member</h2>
-            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-user-edit mr-2 commotion-red"></i>Edit Crew Member</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form onsubmit="handleEditCrew(event, '${crew.id}')" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input type="text" id="editCrewName" value="${crew.name}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <input type="text" id="editCrewRole" value="${crew.role}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Day Rate ($)</label>
+                        <input type="number" id="editCrewRate" value="${crew.rate}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Available</label>
+                        <select id="editCrewAvailable" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="true" ${crew.available ? 'selected' : ''}>Available</option>
+                            <option value="false" ${!crew.available ? 'selected' : ''}>Unavailable</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <input type="tel" id="editCrewPhone" value="${crew.phone}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="editCrewEmail" value="${crew.email}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" id="saveCrewBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
+                    <button type="button" onclick="closeModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                </div>
+            </form>
         </div>
-        <form onsubmit="handleEditCrew(event, '${crew.id}')" class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input type="text" id="editCrewName" value="${crew.name}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                <input type="text" id="editCrewRole" value="${crew.role}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Day Rate ($)</label>
-                    <input type="number" id="editCrewRate" value="${crew.rate}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Available</label>
-                    <select id="editCrewAvailable" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                        <option value="true" ${crew.available ? 'selected' : ''}>Available</option>
-                        <option value="false" ${!crew.available ? 'selected' : ''}>Unavailable</option>
-                    </select>
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input type="tel" id="editCrewPhone" value="${crew.phone}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input type="email" id="editCrewEmail" value="${crew.email}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-            </div>
-            <div class="flex gap-3 pt-4">
-                <button type="submit" id="saveCrewBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
-                <button type="button" onclick="closeModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
-            </div>
-        </form>
     `;
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -1324,6 +1332,126 @@ async function handleEditCrew(e, crewMemberId) {
 function editScheduleItem(eventId, date, time) {
     // Redirect to event detail page for schedule editing
     window.location.href = `event-detail.html?id=${eventId}`;
+}
+
+function showExpandedCalendar() {
+    const modal = document.getElementById('modal');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+        <div class="p-4 sm:p-6" style="min-height: 80vh;">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-calendar-alt mr-2 commotion-red"></i>Full Calendar</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex bg-gray-100 rounded-lg p-1">
+                    <button onclick="setExpandedCalendarView('week')" id="expandedWeekBtn" class="px-3 py-2 text-sm rounded-md">Week</button>
+                    <button onclick="setExpandedCalendarView('month')" id="expandedMonthBtn" class="px-3 py-2 text-sm rounded-md bg-white shadow-sm font-semibold">Month</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="navigateExpandedCalendar(-1)" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"><i class="fas fa-chevron-left"></i></button>
+                    <span class="px-4 py-2 font-semibold min-w-[150px] text-center" id="expandedCalendarTitle"></span>
+                    <button onclick="navigateExpandedCalendar(1)" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div id="expandedCalendarContainer" style="min-height: 60vh;"></div>
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    // Render expanded calendar
+    renderExpandedCalendar();
+}
+
+let expandedCalendarDate = new Date(currentCalendarDate);
+let expandedCalendarView = 'month';
+
+function setExpandedCalendarView(view) {
+    expandedCalendarView = view;
+    document.getElementById('expandedWeekBtn').className = view === 'week' ? 'px-3 py-2 text-sm rounded-md bg-white shadow-sm font-semibold' : 'px-3 py-2 text-sm rounded-md';
+    document.getElementById('expandedMonthBtn').className = view === 'month' ? 'px-3 py-2 text-sm rounded-md bg-white shadow-sm font-semibold' : 'px-3 py-2 text-sm rounded-md';
+    renderExpandedCalendar();
+}
+
+function navigateExpandedCalendar(direction) {
+    if (expandedCalendarView === 'week') {
+        expandedCalendarDate.setDate(expandedCalendarDate.getDate() + (direction * 7));
+    } else {
+        expandedCalendarDate.setMonth(expandedCalendarDate.getMonth() + direction);
+    }
+    renderExpandedCalendar();
+}
+
+function renderExpandedCalendar() {
+    const container = document.getElementById('expandedCalendarContainer');
+    const titleEl = document.getElementById('expandedCalendarTitle');
+    
+    if (expandedCalendarView === 'month') {
+        titleEl.textContent = expandedCalendarDate.toLocaleDateString('en-NZ', { month: 'long', year: 'numeric' });
+        
+        const year = expandedCalendarDate.getFullYear();
+        const month = expandedCalendarDate.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startOffset = firstDay.getDay();
+        
+        let html = '<div class="grid grid-cols-7 gap-1">';
+        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(d => {
+            html += `<div class="text-center text-xs font-semibold text-gray-500 py-2">${d}</div>`;
+        });
+        
+        for (let i = 0; i < startOffset; i++) html += '<div class="p-2"></div>';
+        
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const eventsOnDay = FIRESTORE_DATA.events.filter(e => dateStr >= e.startDate && dateStr <= e.endDate);
+            const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
+            
+            html += `<div class="p-2 min-h-[100px] border ${isToday ? 'bg-red-50 border-red-200' : 'border-gray-100'} rounded-lg">
+                <div class="text-sm font-semibold ${isToday ? 'commotion-red' : 'text-gray-700'}">${day}</div>
+                <div class="space-y-1 mt-1">
+                    ${eventsOnDay.map(e => `<div class="text-xs p-1 rounded text-white truncate cursor-pointer" style="background-color: ${e.color}" onclick="closeModal(); viewEvent('${e.id}')">${e.name}</div>`).join('')}
+                </div>
+            </div>`;
+        }
+        
+        html += '</div>';
+        container.innerHTML = html;
+    } else {
+        // Week view
+        const weekStart = new Date(expandedCalendarDate);
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        titleEl.textContent = `Week of ${weekStart.toLocaleDateString('en-NZ', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        
+        let html = '<div class="grid grid-cols-7 gap-2">';
+        
+        for (let i = 0; i < 7; i++) {
+            const currentDate = new Date(weekStart);
+            currentDate.setDate(weekStart.getDate() + i);
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const eventsOnDay = FIRESTORE_DATA.events.filter(e => dateStr >= e.startDate && dateStr <= e.endDate);
+            const isToday = new Date().toDateString() === currentDate.toDateString();
+            
+            html += `<div class="p-3 min-h-[300px] border ${isToday ? 'bg-red-50 border-red-200' : 'border-gray-200'} rounded-lg">
+                <div class="text-center mb-2">
+                    <div class="text-xs text-gray-500">${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i]}</div>
+                    <div class="text-lg font-bold ${isToday ? 'commotion-red' : 'text-gray-700'}">${currentDate.getDate()}</div>
+                </div>
+                <div class="space-y-2">
+                    ${eventsOnDay.map(e => `<div class="text-xs p-2 rounded text-white cursor-pointer" style="background-color: ${e.color}" onclick="closeModal(); viewEvent('${e.id}')">
+                        <div class="font-semibold truncate">${e.name}</div>
+                        <div class="opacity-75 truncate">${e.location}</div>
+                    </div>`).join('')}
+                </div>
+            </div>`;
+        }
+        
+        html += '</div>';
+        container.innerHTML = html;
+    }
 }
 
 // Utility Functions
