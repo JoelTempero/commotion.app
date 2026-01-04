@@ -2,12 +2,12 @@
   "name": "COMMOTION.APP",
   "short_name": "Commotion",
   "description": "Event videography management for Commotion Studio",
-  "start_url": ".",
+  "start_url": "/commotion.app/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#b93a3a",
   "orientation": "portrait-primary",
-  "scope": ".",
+  "scope": "/commotion.app/",
   "icons": [
     {
       "src": "icons/icon-72x72.png",

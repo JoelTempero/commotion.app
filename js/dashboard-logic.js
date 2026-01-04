@@ -1914,5 +1914,5 @@ async function upgradeToAdmin(crewId) {
     
     // In a real app, this would create a Firebase Auth account and set custom claims
     // For now, we'll just show a message about what would happen
-    alert(\`To upgrade \${crew.name} to admin:\n\n1. Create Firebase Auth account for \${crew.email}\n2. Set userRole to 'admin' in their profile\n\nThis requires Firebase Admin SDK configuration.\`);
+    alert('To upgrade ' + crew.name + ' to admin:\n\n1. Create Firebase Auth account for ' + crew.email + '\n2. Set userRole to admin in their profile\n\nThis requires Firebase Admin SDK configuration.');
 }
