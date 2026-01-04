@@ -111,6 +111,7 @@
                     <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm active" onclick="switchTab('overview', this)">Overview</button>
                     <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('schedule', this)">Schedule</button>
                     <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('crew', this)">Crew</button>
+                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('tasks', this)">Tasks</button>
                     <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('deliverables', this)">Deliverables</button>
                     <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('gear', this)">Gear</button>
                 </div>
@@ -146,6 +147,7 @@
         let crewData = [];
         let gearData = [];
         let clientsData = [];
+        let tasksData = [];
 
         // Load all data from Firestore
         async function loadData() {
@@ -159,15 +161,17 @@
                 }
                 
                 // Load related data in parallel
-                const [crew, gear, clients] = await Promise.all([
+                const [crew, gear, clients, tasks] = await Promise.all([
                     firestoreHelpers.getCollection('crew'),
                     firestoreHelpers.getCollection('gear'),
-                    firestoreHelpers.getCollection('clients')
+                    firestoreHelpers.getCollection('clients'),
+                    firestoreHelpers.getCollection('tasks')
                 ]);
                 
                 crewData = crew;
                 gearData = gear;
                 clientsData = clients;
+                tasksData = tasks.filter(t => t.eventId === eventId);
                 
                 // Update header
                 document.getElementById('eventName').textContent = eventData.name;
@@ -216,6 +220,7 @@
                 case 'overview': container.innerHTML = renderOverviewTab(); break;
                 case 'schedule': container.innerHTML = renderScheduleTab(); break;
                 case 'crew': container.innerHTML = renderCrewTab(); break;
+                case 'tasks': container.innerHTML = renderTasksTab(); break;
                 case 'deliverables': container.innerHTML = renderDeliverablesTab(); break;
                 case 'gear': container.innerHTML = renderGearTab(); break;
             }
@@ -345,6 +350,69 @@
                     `).join('')}
                 </div>
                 <button onclick="assignCrew()" class="w-full mt-6 px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-red-500 hover:text-red-600"><i class="fas fa-plus mr-2"></i>Add Crew Member</button>
+            `;
+        }
+
+        function renderTasksTab() {
+            const canEdit = userRole === 'admin';
+            const todoTasks = tasksData.filter(t => t.status === 'todo');
+            const inProgressTasks = tasksData.filter(t => t.status === 'in-progress');
+            const doneTasks = tasksData.filter(t => t.status === 'done');
+            
+            if (tasksData.length === 0 && !canEdit) {
+                return `<div class="text-center py-12 text-gray-500"><i class="fas fa-tasks text-4xl mb-3"></i><p>No tasks assigned</p></div>`;
+            }
+            
+            if (tasksData.length === 0 && canEdit) {
+                return `<div class="text-center py-12 text-gray-500"><i class="fas fa-tasks text-4xl mb-3"></i><p>No tasks yet</p><button onclick="addTask()" class="mt-4 px-4 py-2 bg-commotion-red text-white rounded-lg text-sm font-semibold">Add Task</button></div>`;
+            }
+            
+            return `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <!-- TODO Column -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-bold text-gray-700 mb-3 flex items-center"><span class="w-3 h-3 bg-gray-400 rounded-full mr-2"></span>To Do (${todoTasks.length})</h4>
+                        <div class="space-y-2">
+                            ${todoTasks.map(task => renderTaskCard(task, canEdit)).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- In Progress Column -->
+                    <div class="bg-yellow-50 rounded-lg p-4">
+                        <h4 class="font-bold text-yellow-700 mb-3 flex items-center"><span class="w-3 h-3 bg-yellow-400 rounded-full mr-2"></span>In Progress (${inProgressTasks.length})</h4>
+                        <div class="space-y-2">
+                            ${inProgressTasks.map(task => renderTaskCard(task, canEdit)).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- Done Column -->
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <h4 class="font-bold text-green-700 mb-3 flex items-center"><span class="w-3 h-3 bg-green-400 rounded-full mr-2"></span>Done (${doneTasks.length})</h4>
+                        <div class="space-y-2">
+                            ${doneTasks.map(task => renderTaskCard(task, canEdit)).join('')}
+                        </div>
+                    </div>
+                </div>
+                ${canEdit ? `<button onclick="addTask()" class="w-full mt-6 px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-red-500 hover:text-red-600"><i class="fas fa-plus mr-2"></i>Add Task</button>` : ''}
+            `;
+        }
+        
+        function renderTaskCard(task, canEdit) {
+            const assignedCrew = crewData.find(c => c.id === task.assignedTo);
+            const priorityColors = { urgent: 'bg-red-100 text-red-700', high: 'bg-orange-100 text-orange-700', normal: 'bg-gray-100 text-gray-700' };
+            
+            return `
+                <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200 ${canEdit ? 'cursor-pointer hover:shadow-md' : ''}" ${canEdit ? `onclick="editTask('${task.id}')"` : ''}>
+                    <div class="flex justify-between items-start mb-2">
+                        <h5 class="font-semibold text-sm text-gray-900 ${task.status === 'done' ? 'line-through text-gray-500' : ''}">${task.title}</h5>
+                        ${task.priority ? `<span class="px-2 py-0.5 rounded text-xs font-semibold ${priorityColors[task.priority] || priorityColors.normal}">${task.priority}</span>` : ''}
+                    </div>
+                    ${task.description ? `<p class="text-xs text-gray-600 mb-2">${task.description}</p>` : ''}
+                    <div class="flex justify-between items-center text-xs text-gray-500">
+                        <span>${assignedCrew ? `<i class="fas fa-user mr-1"></i>${assignedCrew.name.split(' ')[0]}` : '<i class="fas fa-user-slash mr-1"></i>Unassigned'}</span>
+                        <span><i class="fas fa-calendar mr-1"></i>${new Date(task.dueDate).toLocaleDateString('en-NZ', {month: 'short', day: 'numeric'})}</span>
+                    </div>
+                </div>
             `;
         }
 
@@ -1255,6 +1323,192 @@ ${eventData.notes || 'No notes'}
                 await loadData();
             } else {
                 alert('Error deleting note: ' + result.error);
+            }
+        }
+        
+        function addTask() {
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('eventModalContent');
+            const assignedCrew = eventData.crewAssigned || [];
+            
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-tasks mr-2 commotion-red"></i>Add Task</h2>
+                        <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="handleAddTask(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
+                            <input type="text" id="taskTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="e.g., Edit highlight reel">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+                            <textarea id="taskDescription" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Additional details..."></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
+                                <select id="taskAssignee" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                    <option value="">-- Unassigned --</option>
+                                    ${crewData.filter(c => assignedCrew.includes(c.id)).map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                                <input type="date" id="taskDueDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                            <select id="taskPriority" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="normal">Normal</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" id="addTaskBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Add Task</button>
+                            <button type="button" onclick="closeEventModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        async function handleAddTask(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addTaskBtn');
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+            
+            const newTask = {
+                id: 'task-' + Date.now(),
+                eventId: eventId,
+                title: document.getElementById('taskTitle').value,
+                description: document.getElementById('taskDescription').value,
+                assignedTo: document.getElementById('taskAssignee').value || null,
+                dueDate: document.getElementById('taskDueDate').value,
+                priority: document.getElementById('taskPriority').value,
+                status: 'todo',
+                createdAt: new Date().toISOString()
+            };
+            
+            const result = await firestoreHelpers.setDoc('tasks', newTask.id, newTask, false);
+            
+            if (result.success) {
+                closeEventModal();
+                await loadData();
+            } else {
+                alert('Error adding task: ' + result.error);
+                btn.disabled = false;
+                btn.textContent = 'Add Task';
+            }
+        }
+        
+        function editTask(taskId) {
+            const task = tasksData.find(t => t.id === taskId);
+            if (!task) return;
+            
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('eventModalContent');
+            const assignedCrew = eventData.crewAssigned || [];
+            
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-tasks mr-2 commotion-red"></i>Edit Task</h2>
+                        <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="handleEditTask(event, '${taskId}')" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
+                            <input type="text" id="editTaskTitle" value="${task.title}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="editTaskDescription" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${task.description || ''}</textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
+                                <select id="editTaskAssignee" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                    <option value="">-- Unassigned --</option>
+                                    ${crewData.filter(c => assignedCrew.includes(c.id)).map(c => `<option value="${c.id}" ${task.assignedTo === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                                <input type="date" id="editTaskDueDate" value="${task.dueDate}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                <select id="editTaskStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                    <option value="todo" ${task.status === 'todo' ? 'selected' : ''}>To Do</option>
+                                    <option value="in-progress" ${task.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                                    <option value="done" ${task.status === 'done' ? 'selected' : ''}>Done</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                                <select id="editTaskPriority" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                    <option value="normal" ${task.priority === 'normal' ? 'selected' : ''}>Normal</option>
+                                    <option value="high" ${task.priority === 'high' ? 'selected' : ''}>High</option>
+                                    <option value="urgent" ${task.priority === 'urgent' ? 'selected' : ''}>Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" id="editTaskBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
+                            <button type="button" onclick="deleteTask('${taskId}')" class="px-4 py-3 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-semibold">Delete</button>
+                            <button type="button" onclick="closeEventModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        async function handleEditTask(e, taskId) {
+            e.preventDefault();
+            const btn = document.getElementById('editTaskBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
+            const updates = {
+                title: document.getElementById('editTaskTitle').value,
+                description: document.getElementById('editTaskDescription').value,
+                assignedTo: document.getElementById('editTaskAssignee').value || null,
+                dueDate: document.getElementById('editTaskDueDate').value,
+                status: document.getElementById('editTaskStatus').value,
+                priority: document.getElementById('editTaskPriority').value
+            };
+            
+            const result = await firestoreHelpers.updateDoc('tasks', taskId, updates);
+            
+            if (result.success) {
+                closeEventModal();
+                await loadData();
+            } else {
+                alert('Error updating task: ' + result.error);
+                btn.disabled = false;
+                btn.textContent = 'Save Changes';
+            }
+        }
+        
+        async function deleteTask(taskId) {
+            const result = await firestoreHelpers.deleteDoc('tasks', taskId);
+            
+            if (result.success) {
+                closeEventModal();
+                await loadData();
+            } else {
+                alert('Error deleting task: ' + result.error);
             }
         }
         

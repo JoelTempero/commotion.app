@@ -357,7 +357,7 @@ function loadCrewDashboard() {
                     ${assignedEvents.length > 0 ? `
                         <div class="space-y-3">
                             ${assignedEvents.map(event => `
-                                <div class="event-card bg-white rounded-lg p-4 border-l-4 cursor-pointer" style="border-left-color: ${event.color}" onclick="showModal('eventSchedule', '${event.id}')">
+                                <div class="event-card bg-white rounded-lg p-4 border-l-4 cursor-pointer" style="border-left-color: ${event.color}" onclick="viewEvent('${event.id}')">
                                     <div class="flex justify-between items-start mb-2">
                                         <h3 class="font-semibold text-gray-900 text-sm">${event.name}</h3>
                                         <span class="px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(event.status)}">${getStatusLabel(event.status)}</span>
@@ -408,6 +408,12 @@ function loadCrewDashboard() {
                 </div>
             </div>
 
+            <!-- My Earnings -->
+            <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 mt-4">
+                <h2 class="text-lg font-bold text-gray-900 mb-4"><i class="fas fa-wallet mr-2 commotion-red"></i>My Earnings</h2>
+                <div id="earningsContent"></div>
+            </div>
+
             <!-- My Gear -->
             <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 mt-4">
                 <div class="flex justify-between items-center mb-4">
@@ -444,8 +450,46 @@ function loadCrewDashboard() {
                 </div>
             </div>
         </div>
-        <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
+        <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
             <div id="modalContent" class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"></div>
+        </div>
+    `;
+    
+    // Render earnings after DOM is ready
+    setTimeout(() => renderCrewEarnings(crewMember, assignedEvents), 0);
+}
+
+function renderCrewEarnings(crewMember, assignedEvents) {
+    const container = document.getElementById('earningsContent');
+    if (!container) return;
+    
+    let totalOwed = 0;
+    let eventEarnings = [];
+    assignedEvents.forEach(event => {
+        const days = Math.ceil((new Date(event.endDate) - new Date(event.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+        const amount = crewMember.rate * days;
+        totalOwed += amount;
+        eventEarnings.push({ name: event.name, days, amount });
+    });
+    const totalPaid = crewMember.paidAmount || 0;
+    const balance = totalOwed - totalPaid;
+    
+    container.innerHTML = `
+        <div class="grid grid-cols-3 gap-3 mb-4 text-center">
+            <div class="p-3 bg-blue-50 rounded-lg"><p class="text-lg font-bold text-blue-600">$${totalOwed.toLocaleString()}</p><p class="text-xs text-gray-600">Total Earned</p></div>
+            <div class="p-3 bg-green-50 rounded-lg"><p class="text-lg font-bold text-green-600">$${totalPaid.toLocaleString()}</p><p class="text-xs text-gray-600">Received</p></div>
+            <div class="p-3 ${balance > 0 ? 'bg-red-50' : 'bg-green-50'} rounded-lg"><p class="text-lg font-bold ${balance > 0 ? 'commotion-red' : 'text-green-600'}">$${balance.toLocaleString()}</p><p class="text-xs text-gray-600">Balance Due</p></div>
+        </div>
+        <div class="space-y-2">
+            ${eventEarnings.map(e => `
+                <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-semibold">${e.name}</p>
+                        <p class="text-xs text-gray-500">${e.days} days @ $${crewMember.rate}/day</p>
+                    </div>
+                    <span class="font-bold text-sm">$${e.amount.toLocaleString()}</span>
+                </div>
+            `).join('')}
         </div>
     `;
 }
@@ -1045,10 +1089,10 @@ function renderEventSchedule(event) {
 
 // Stat Detail Modal
 function showStatDetail(type) {
-    const overlay = document.getElementById('modalOverlay');
+    const modal = document.getElementById('modal');
     const content = document.getElementById('modalContent');
-    overlay.classList.remove('hidden');
-    overlay.classList.add('flex');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
     
     switch(type) {
         case 'revenue':
@@ -1067,31 +1111,86 @@ function showStatDetail(type) {
 }
 
 function renderRevenueDetail() {
-    const paidEvents = FIRESTORE_DATA.events.filter(e => e.paidAmount > 0);
     const totalQuoted = FIRESTORE_DATA.events.reduce((sum, e) => sum + e.quoteAmount, 0);
     const totalPaid = FIRESTORE_DATA.events.reduce((sum, e) => sum + e.paidAmount, 0);
+    
+    // Calculate crew costs
+    let crewCosts = [];
+    FIRESTORE_DATA.events.forEach(event => {
+        if (event.crewAssigned && event.crewAssigned.length > 0) {
+            const eventDays = Math.ceil((new Date(event.endDate) - new Date(event.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+            event.crewAssigned.forEach(crewId => {
+                const crew = FIRESTORE_DATA.crew.find(c => c.id === crewId);
+                if (crew) {
+                    const existing = crewCosts.find(cc => cc.crewId === crewId);
+                    const cost = crew.rate * eventDays;
+                    if (existing) {
+                        existing.totalOwed += cost;
+                        existing.events.push({ name: event.name, days: eventDays, amount: cost });
+                    } else {
+                        crewCosts.push({
+                            crewId: crewId,
+                            name: crew.name,
+                            rate: crew.rate,
+                            totalOwed: cost,
+                            totalPaid: crew.paidAmount || 0,
+                            events: [{ name: event.name, days: eventDays, amount: cost }]
+                        });
+                    }
+                }
+            });
+        }
+    });
+    
+    const totalCrewCosts = crewCosts.reduce((sum, c) => sum + c.totalOwed, 0);
+    const totalCrewPaid = crewCosts.reduce((sum, c) => sum + c.totalPaid, 0);
+    const netProfit = totalPaid - totalCrewPaid;
     
     return `
         <div class="p-6">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-dollar-sign mr-2 text-green-600"></i>Revenue Overview</h2>
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-dollar-sign mr-2 text-green-600"></i>Revenue & Costs</h2>
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <div class="grid grid-cols-3 gap-4 mb-6">
-                <div class="text-center p-4 bg-green-50 rounded-lg"><p class="text-2xl font-bold text-green-600">$${totalPaid.toLocaleString()}</p><p class="text-xs text-gray-600">Collected</p></div>
-                <div class="text-center p-4 bg-yellow-50 rounded-lg"><p class="text-2xl font-bold text-yellow-600">$${(totalQuoted - totalPaid).toLocaleString()}</p><p class="text-xs text-gray-600">Outstanding</p></div>
-                <div class="text-center p-4 bg-blue-50 rounded-lg"><p class="text-2xl font-bold text-blue-600">$${totalQuoted.toLocaleString()}</p><p class="text-xs text-gray-600">Total Quoted</p></div>
+            
+            <!-- Revenue Summary -->
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="text-center p-3 bg-green-50 rounded-lg"><p class="text-xl font-bold text-green-600">$${totalPaid.toLocaleString()}</p><p class="text-xs text-gray-600">Collected</p></div>
+                <div class="text-center p-3 bg-yellow-50 rounded-lg"><p class="text-xl font-bold text-yellow-600">$${(totalQuoted - totalPaid).toLocaleString()}</p><p class="text-xs text-gray-600">Outstanding</p></div>
+                <div class="text-center p-3 bg-blue-50 rounded-lg"><p class="text-xl font-bold text-blue-600">$${totalQuoted.toLocaleString()}</p><p class="text-xs text-gray-600">Total Quoted</p></div>
             </div>
-            <h3 class="font-semibold text-gray-900 mb-3">Payment Status by Event</h3>
-            <div class="space-y-2 max-h-64 overflow-y-auto">
-                ${FIRESTORE_DATA.events.filter(e => e.quoteAmount > 0).map(e => `
+            
+            <!-- Crew Costs Summary -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <h3 class="font-semibold text-gray-900 mb-3"><i class="fas fa-users mr-2 commotion-red"></i>Crew Costs</h3>
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div><p class="text-lg font-bold commotion-red">$${totalCrewCosts.toLocaleString()}</p><p class="text-xs text-gray-600">Total Owed</p></div>
+                    <div><p class="text-lg font-bold text-green-600">$${totalCrewPaid.toLocaleString()}</p><p class="text-xs text-gray-600">Paid Out</p></div>
+                    <div><p class="text-lg font-bold text-orange-600">$${(totalCrewCosts - totalCrewPaid).toLocaleString()}</p><p class="text-xs text-gray-600">Unpaid</p></div>
+                </div>
+            </div>
+            
+            <!-- Net Profit -->
+            <div class="bg-gray-100 rounded-lg p-4 mb-6 text-center">
+                <p class="text-xs text-gray-600 mb-1">Net Profit (Collected - Crew Paid)</p>
+                <p class="text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'commotion-red'}">$${netProfit.toLocaleString()}</p>
+            </div>
+            
+            <!-- Crew Payment Details -->
+            <h3 class="font-semibold text-gray-900 mb-3">Crew Payment Status</h3>
+            <div class="space-y-2 max-h-48 overflow-y-auto">
+                ${crewCosts.length > 0 ? crewCosts.map(cc => `
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div><p class="font-semibold text-sm">${e.name}</p><p class="text-xs text-gray-500">${e.paymentStatus}</p></div>
-                        <div class="text-right"><p class="font-bold text-sm">$${e.paidAmount.toLocaleString()} <span class="text-gray-400">/ $${e.quoteAmount.toLocaleString()}</span></p>
-                            <div class="w-24 bg-gray-200 rounded-full h-2 mt-1"><div class="bg-green-500 h-2 rounded-full" style="width: ${(e.paidAmount/e.quoteAmount)*100}%"></div></div>
+                        <div>
+                            <p class="font-semibold text-sm">${cc.name}</p>
+                            <p class="text-xs text-gray-500">${cc.events.length} event(s) • $${cc.rate}/day</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-sm">$${cc.totalPaid.toLocaleString()} <span class="text-gray-400">/ $${cc.totalOwed.toLocaleString()}</span></p>
+                            <button onclick="showCrewPaymentModal('${cc.crewId}')" class="text-xs text-blue-600 hover:underline">Manage</button>
                         </div>
                     </div>
-                `).join('')}
+                `).join('') : '<p class="text-sm text-gray-500 text-center py-4">No crew assigned to events</p>'}
             </div>
         </div>
     `;
@@ -1588,6 +1687,109 @@ function logout() {
         localStorage.clear();
         window.location.href = 'index.html';
     });
+}
+
+function showCrewPaymentModal(crewId) {
+    const crew = FIRESTORE_DATA.crew.find(c => c.id === crewId);
+    if (!crew) return;
+    
+    // Calculate what they're owed
+    let eventDetails = [];
+    FIRESTORE_DATA.events.forEach(event => {
+        if (event.crewAssigned && event.crewAssigned.includes(crewId)) {
+            const days = Math.ceil((new Date(event.endDate) - new Date(event.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+            eventDetails.push({
+                name: event.name,
+                days: days,
+                amount: crew.rate * days,
+                date: event.startDate
+            });
+        }
+    });
+    
+    const totalOwed = eventDetails.reduce((sum, e) => sum + e.amount, 0);
+    const totalPaid = crew.paidAmount || 0;
+    
+    const modal = document.getElementById('modal');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-wallet mr-2 commotion-red"></i>Payment: ${crew.name}</h2>
+                <button onclick="showStatDetail('revenue')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-3 mb-6 text-center">
+                <div class="p-3 bg-blue-50 rounded-lg"><p class="text-lg font-bold text-blue-600">$${crew.rate}</p><p class="text-xs text-gray-600">Day Rate</p></div>
+                <div class="p-3 bg-red-50 rounded-lg"><p class="text-lg font-bold commotion-red">$${totalOwed.toLocaleString()}</p><p class="text-xs text-gray-600">Total Owed</p></div>
+                <div class="p-3 bg-green-50 rounded-lg"><p class="text-lg font-bold text-green-600">$${totalPaid.toLocaleString()}</p><p class="text-xs text-gray-600">Paid</p></div>
+            </div>
+            
+            <div class="bg-gray-100 rounded-lg p-4 mb-6 text-center">
+                <p class="text-xs text-gray-600 mb-1">Balance Due</p>
+                <p class="text-2xl font-bold ${totalOwed - totalPaid > 0 ? 'commotion-red' : 'text-green-600'}">$${(totalOwed - totalPaid).toLocaleString()}</p>
+            </div>
+            
+            <h3 class="font-semibold text-gray-900 mb-3">Event Breakdown</h3>
+            <div class="space-y-2 max-h-32 overflow-y-auto mb-6">
+                ${eventDetails.map(e => `
+                    <div class="flex justify-between p-2 bg-gray-50 rounded">
+                        <span class="text-sm">${e.name} (${e.days} days)</span>
+                        <span class="text-sm font-semibold">$${e.amount.toLocaleString()}</span>
+                    </div>
+                `).join('')}
+            </div>
+            
+            <form onsubmit="handleCrewPayment(event, '${crewId}')" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Record Payment</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="paymentAmount" value="${totalOwed - totalPaid}" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" placeholder="Amount">
+                        <button type="submit" id="recordPaymentBtn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold">Record</button>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="resetCrewPayment('${crewId}')" class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm">Reset to $0</button>
+                    <button type="button" onclick="markFullyPaid('${crewId}', ${totalOwed})" class="flex-1 px-4 py-2 bg-commotion-red hover-commotion-red text-white rounded-lg text-sm">Mark Fully Paid</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+async function handleCrewPayment(e, crewId) {
+    e.preventDefault();
+    const btn = document.getElementById('recordPaymentBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    
+    const crew = FIRESTORE_DATA.crew.find(c => c.id === crewId);
+    const amount = parseInt(document.getElementById('paymentAmount').value);
+    const newTotal = (crew.paidAmount || 0) + amount;
+    
+    const result = await firestoreHelpers.updateDoc('crew', crewId, { paidAmount: newTotal });
+    
+    if (result.success) {
+        await loadFirestoreData();
+        showCrewPaymentModal(crewId);
+    } else {
+        alert('Error: ' + result.error);
+        btn.disabled = false;
+        btn.textContent = 'Record';
+    }
+}
+
+async function resetCrewPayment(crewId) {
+    await firestoreHelpers.updateDoc('crew', crewId, { paidAmount: 0 });
+    await loadFirestoreData();
+    showCrewPaymentModal(crewId);
+}
+
+async function markFullyPaid(crewId, amount) {
+    await firestoreHelpers.updateDoc('crew', crewId, { paidAmount: amount });
+    await loadFirestoreData();
+    showCrewPaymentModal(crewId);
 }
 
 // Expanded Events Modal
