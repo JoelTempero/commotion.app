@@ -1136,6 +1136,8 @@ function formatDateRange(start, end) {
 }
 
 function logout() {
-    localStorage.clear();
-    window.location.href = 'index.html';
+    signOut().then(() => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    });
 }

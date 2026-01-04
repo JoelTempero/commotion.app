@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COMMOTION.APP - Database Setup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8f9fa; }
+        .commotion-red { color: #b93a3a; }
+        .bg-commotion-red { background-color: #b93a3a; }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold commotion-red mb-2">COMMOTION.APP</h1>
+        <h2 class="text-xl text-gray-600 mb-8">Database Setup & Seeding</h2>
+        
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h3 class="font-bold text-lg mb-4">Step 1: Create Test Users</h3>
+            <p class="text-sm text-gray-600 mb-4">This will create 3 test users in Firebase Authentication with the password "demo123"</p>
+            <button onclick="createUsers()" id="createUsersBtn" class="px-4 py-2 bg-commotion-red text-white rounded-lg font-semibold hover:opacity-90">
+                Create Users
+            </button>
+            <div id="userStatus" class="mt-4 text-sm"></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h3 class="font-bold text-lg mb-4">Step 2: Seed Database</h3>
+            <p class="text-sm text-gray-600 mb-4">This will populate Firestore with demo events, crew, clients, gear, and tasks.</p>
+            <button onclick="seedDatabase()" id="seedDbBtn" class="px-4 py-2 bg-commotion-red text-white rounded-lg font-semibold hover:opacity-90">
+                Seed Database
+            </button>
+            <div id="seedStatus" class="mt-4 text-sm"></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="font-bold text-lg mb-4">Status Log</h3>
+            <div id="log" class="bg-gray-50 rounded-lg p-4 text-xs font-mono h-64 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'text-red-600' : type === 'success' ? 'text-green-600' : 'text-gray-600';
+            logDiv.innerHTML += `<div class="${color}">[${time}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // Test users to create
+        const testUsers = [
+            { email: 'jem@commotion.studio', role: 'admin', fullName: 'Jem Anderson-Gardner' },
+            { email: 'ethan@rhythmandalps.co.nz', role: 'client', fullName: 'Ethan Walter', clientId: 'client-001' },
+            { email: 'sam@crewmail.com', role: 'crew', fullName: 'Sam King', crewId: 'crew-sam' }
+        ];
+
+        async function createUsers() {
+            const btn = document.getElementById('createUsersBtn');
+            const status = document.getElementById('userStatus');
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
+            
+            log('Starting user creation...');
+            
+            for (const user of testUsers) {
+                try {
+                    // Create user in Firebase Auth
+                    const userCredential = await auth.createUserWithEmailAndPassword(user.email, 'demo123');
+                    log(`Created auth user: ${user.email}`, 'success');
+                    
+                    // Create user profile in Firestore
+                    const profileData = {
+                        email: user.email,
+                        role: user.role,
+                        fullName: user.fullName,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    if (user.clientId) profileData.clientId = user.clientId;
+                    if (user.crewId) profileData.crewId = user.crewId;
+                    
+                    await db.collection('users').doc(userCredential.user.uid).set(profileData);
+                    log(`Created user profile for: ${user.fullName}`, 'success');
+                    
+                    // Sign out after creating each user
+                    await auth.signOut();
+                    
+                } catch (error) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        log(`User ${user.email} already exists - skipping`, 'info');
+                    } else {
+                        log(`Error creating ${user.email}: ${error.message}`, 'error');
+                    }
+                }
+            }
+            
+            status.innerHTML = '<span class="text-green-600">✓ Users created successfully!</span>';
+            btn.textContent = 'Done';
+            log('User creation complete!', 'success');
+        }
+
+        async function seedDatabase() {
+            const btn = document.getElementById('seedDbBtn');
+            const status = document.getElementById('seedStatus');
+            btn.disabled = true;
+            btn.textContent = 'Seeding...';
+            
+            log('Starting database seeding...');
+            
+            try {
+                // Seed Clients
+                const clients = [
+                    { id: 'client-001', company: 'Rhythm & Alps', contact: 'Ethan Walter', email: 'ethan@rhythmandalps.co.nz', phone: '+64 21 555 0101' },
+                    { id: 'client-002', company: 'Northern Bass', contact: 'Sarah Mitchell', email: 'sarah@northernbass.co.nz', phone: '+64 21 555 0102' },
+                    { id: 'client-003', company: 'Hidden Lakes Festival', contact: 'Mike Thompson', email: 'mike@hiddenlakes.nz', phone: '+64 21 555 0103' }
+                ];
+                
+                for (const client of clients) {
+                    await db.collection('clients').doc(client.id).set(client);
+                }
+                log(`Seeded ${clients.length} clients`, 'success');
+
+                // Seed Crew
+                const crew = [
+                    { id: 'crew-sam', name: 'Sam King', role: 'Lead Videographer', rate: 650, phone: '+64 21 555 0201', email: 'sam@crewmail.com', available: true },
+                    { id: 'crew-002', name: 'Alex Chen', role: 'Drone Operator', rate: 550, phone: '+64 21 555 0202', email: 'alex@crewmail.com', available: true },
+                    { id: 'crew-003', name: 'Jordan Taylor', role: 'Camera Operator', rate: 450, phone: '+64 21 555 0203', email: 'jordan@crewmail.com', available: false },
+                    { id: 'crew-004', name: 'Riley Morgan', role: 'Sound Engineer', rate: 400, phone: '+64 21 555 0204', email: 'riley@crewmail.com', available: true },
+                    { id: 'crew-005', name: 'Casey Williams', role: 'Editor', rate: 500, phone: '+64 21 555 0205', email: 'casey@crewmail.com', available: true }
+                ];
+                
+                for (const member of crew) {
+                    await db.collection('crew').doc(member.id).set(member);
+                }
+                log(`Seeded ${crew.length} crew members`, 'success');
+
+                // Seed Events
+                const events = [
+                    {
+                        id: 'evt-001',
+                        name: 'Hidden Lakes Festival 2025',
+                        client_id: 'client-003',
+                        clientName: 'Hidden Lakes Festival',
+                        location: 'Queenstown',
+                        startDate: '2025-01-03',
+                        endDate: '2025-01-05',
+                        attendees: 3500,
+                        quoteAmount: 18500,
+                        paidAmount: 9250,
+                        status: 'confirmed',
+                        color: '#3B82F6',
+                        crewCount: 3,
+                        gearValue: 45000,
+                        crewAssigned: ['crew-sam', 'crew-002', 'crew-004'],
+                        deliverables: [
+                            { id: 'del-001', type: 'Highlight Reel', duration: '3-5 min', status: 'in-progress', dueDate: '2025-01-20', progress: 25 },
+                            { id: 'del-002', type: 'Social Media Package', duration: '10x clips', status: 'pending', dueDate: '2025-01-15', progress: 0 }
+                        ],
+                        schedule: [
+                            { date: '2025-01-03', title: 'Day 1 - Setup & Opening', items: [
+                                { time: '08:00', activity: 'Site arrival & gear setup', crew: ['crew-sam', 'crew-002'] },
+                                { time: '14:00', activity: 'Venue walkthrough', crew: ['crew-sam'] },
+                                { time: '18:00', activity: 'Opening ceremony coverage', crew: ['crew-sam', 'crew-002', 'crew-004'] }
+                            ]},
+                            { date: '2025-01-04', title: 'Day 2 - Main Event', items: [
+                                { time: '10:00', activity: 'Main stage setup', crew: ['crew-sam', 'crew-002'] },
+                                { time: '16:00', activity: 'Headline act coverage', crew: ['crew-sam', 'crew-002', 'crew-004'] }
+                            ]}
+                        ],
+                        notes: 'VIP access confirmed. Drone permits approved.'
+                    },
+                    {
+                        id: 'evt-002',
+                        name: 'Rhythm & Alps 2025',
+                        client_id: 'client-001',
+                        clientName: 'Rhythm & Alps',
+                        location: 'Cardrona Valley',
+                        startDate: '2025-01-10',
+                        endDate: '2025-01-12',
+                        attendees: 8000,
+                        quoteAmount: 32000,
+                        paidAmount: 16000,
+                        status: 'confirmed',
+                        color: '#10B981',
+                        crewCount: 4,
+                        gearValue: 65000,
+                        crewAssigned: ['crew-sam', 'crew-002', 'crew-003', 'crew-005'],
+                        deliverables: [
+                            { id: 'del-003', type: 'Aftermovie', duration: '8-10 min', status: 'pending', dueDate: '2025-02-15', progress: 0 },
+                            { id: 'del-004', type: 'Artist Interviews', duration: '6x 3min', status: 'pending', dueDate: '2025-01-25', progress: 0 }
+                        ],
+                        schedule: [
+                            { date: '2025-01-10', title: 'Day 1 - Festival Opens', items: [
+                                { time: '09:00', activity: 'Crew briefing', crew: ['crew-sam', 'crew-002', 'crew-003', 'crew-005'] },
+                                { time: '12:00', activity: 'Festival grounds B-roll', crew: ['crew-sam', 'crew-002'] },
+                                { time: '20:00', activity: 'Night performances', crew: ['crew-sam', 'crew-003'] }
+                            ]}
+                        ]
+                    },
+                    {
+                        id: 'evt-003',
+                        name: 'Northern Bass 2025',
+                        client_id: 'client-002',
+                        clientName: 'Northern Bass',
+                        location: 'Mangawhai',
+                        startDate: '2025-01-17',
+                        endDate: '2025-01-19',
+                        attendees: 12000,
+                        quoteAmount: 45000,
+                        paidAmount: 22500,
+                        status: 'confirmed',
+                        color: '#F59E0B',
+                        crewCount: 5,
+                        gearValue: 78000,
+                        crewAssigned: ['crew-sam', 'crew-002', 'crew-003', 'crew-004', 'crew-005'],
+                        deliverables: [
+                            { id: 'del-005', type: 'Full Documentary', duration: '20-25 min', status: 'pending', dueDate: '2025-03-01', progress: 0 }
+                        ],
+                        schedule: []
+                    },
+                    {
+                        id: 'evt-004',
+                        name: 'Laneway Festival 2025',
+                        client_id: 'client-001',
+                        clientName: 'Rhythm & Alps',
+                        location: 'Auckland',
+                        startDate: '2025-02-03',
+                        endDate: '2025-02-03',
+                        attendees: 15000,
+                        quoteAmount: 25000,
+                        paidAmount: 12500,
+                        status: 'quote-sent',
+                        color: '#8B5CF6',
+                        crewCount: 3,
+                        gearValue: 42000,
+                        crewAssigned: ['crew-sam', 'crew-002', 'crew-005'],
+                        deliverables: [],
+                        schedule: []
+                    }
+                ];
+                
+                for (const event of events) {
+                    await db.collection('events').doc(event.id).set(event);
+                }
+                log(`Seeded ${events.length} events`, 'success');
+
+                // Seed Gear
+                const gear = [
+                    { id: 'gear-001', name: 'Sony FX6', category: 'Camera', value: 8500, status: 'in-use', assignedTo: 'evt-001', owner: 'Commotion Studio', ownerId: 'commotion' },
+                    { id: 'gear-002', name: 'Sony A7S III', category: 'Camera', value: 5200, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+                    { id: 'gear-003', name: 'Canon C70', category: 'Camera', value: 7800, status: 'in-use', assignedTo: 'evt-002', owner: 'Commotion Studio', ownerId: 'commotion' },
+                    { id: 'gear-004', name: 'DJI Inspire 3', category: 'Drone', value: 18000, status: 'in-use', assignedTo: 'evt-001', owner: 'Commotion Studio', ownerId: 'commotion' },
+                    { id: 'gear-005', name: 'DJI Mavic 3 Pro', category: 'Drone', value: 3500, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+                    { id: 'gear-006', name: 'Sony 24-70mm GM II', category: 'Lens', value: 3200, status: 'in-use', assignedTo: 'evt-001', owner: 'Commotion Studio', ownerId: 'commotion' },
+                    { id: 'gear-007', name: 'Sony 70-200mm GM II', category: 'Lens', value: 4100, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+                    { id: 'gear-008', name: 'DJI RS3 Pro', category: 'Gimbal', value: 1200, status: 'in-use', assignedTo: 'evt-002', owner: 'Commotion Studio', ownerId: 'commotion' },
+                    { id: 'gear-009', name: 'Rode Wireless GO II', category: 'Audio', value: 450, status: 'available', assignedTo: null, owner: 'Commotion Studio', ownerId: 'commotion' },
+                    { id: 'gear-010', name: 'Zoom F6 Recorder', category: 'Audio', value: 900, status: 'in-use', assignedTo: 'evt-001', owner: 'Commotion Studio', ownerId: 'commotion' },
+                    // Sam's personal gear
+                    { id: 'gear-sam-001', name: 'Sony A7 IV', category: 'Camera', value: 3800, status: 'available', assignedTo: null, owner: 'Sam King', ownerId: 'crew-sam' },
+                    { id: 'gear-sam-002', name: 'Sigma 35mm f/1.4', category: 'Lens', value: 1200, status: 'available', assignedTo: null, owner: 'Sam King', ownerId: 'crew-sam' },
+                    { id: 'gear-sam-003', name: 'DJI Mini 3 Pro', category: 'Drone', value: 1100, status: 'available', assignedTo: null, owner: 'Sam King', ownerId: 'crew-sam' }
+                ];
+                
+                for (const item of gear) {
+                    await db.collection('gear').doc(item.id).set(item);
+                }
+                log(`Seeded ${gear.length} gear items`, 'success');
+
+                // Seed Tasks
+                const tasks = [
+                    { id: 'task-001', title: 'Backup Day 1 footage', eventId: 'evt-001', assignedTo: 'crew-sam', status: 'done', dueDate: '2025-01-04', priority: 'high' },
+                    { id: 'task-002', title: 'Charge all batteries', eventId: 'evt-001', assignedTo: 'crew-sam', status: 'done', dueDate: '2025-01-03', priority: 'urgent' },
+                    { id: 'task-003', title: 'Organize media folders', eventId: 'evt-001', assignedTo: 'crew-sam', status: 'in-progress', dueDate: '2025-01-06', priority: 'normal' },
+                    { id: 'task-004', title: 'Export social clips', eventId: 'evt-001', assignedTo: 'crew-sam', status: 'todo', dueDate: '2025-01-10', priority: 'high' },
+                    { id: 'task-005', title: 'Color grade highlights', eventId: 'evt-002', assignedTo: 'crew-sam', status: 'todo', dueDate: '2025-01-20', priority: 'normal' }
+                ];
+                
+                for (const task of tasks) {
+                    await db.collection('tasks').doc(task.id).set(task);
+                }
+                log(`Seeded ${tasks.length} tasks`, 'success');
+
+                status.innerHTML = '<span class="text-green-600">✓ Database seeded successfully!</span>';
+                btn.textContent = 'Done';
+                log('Database seeding complete!', 'success');
+                
+            } catch (error) {
+                log(`Error seeding database: ${error.message}`, 'error');
+                status.innerHTML = '<span class="text-red-600">✗ Error - check log</span>';
+                btn.textContent = 'Retry';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -6,6 +6,10 @@
     <title>Dashboard - COMMOTION.APP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
         
@@ -70,9 +74,18 @@
         </div>
     </div>
 
+    <script src="js/firebase-config.js"></script>
     <script src="js/demo-data.js"></script>
     <script src="js/dashboard-logic.js"></script>
     <script>
+        // Check authentication state
+        onAuthStateChange((user) => {
+            if (!user) {
+                // Not logged in, redirect to login
+                window.location.href = 'index.html';
+            }
+        });
+        
         setTimeout(function() {
             const content = document.getElementById('dashboardContent');
             if (content && content.innerHTML.includes('Loading dashboard')) {

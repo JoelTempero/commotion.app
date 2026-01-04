@@ -6,6 +6,10 @@
     <title>COMMOTION.APP - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
         
@@ -60,18 +64,18 @@
         <!-- Login Form -->
         <form onsubmit="handleLogin(event)" class="space-y-4">
             <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Username</label>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Email</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i class="fas fa-user text-gray-400"></i>
+                        <i class="fas fa-envelope text-gray-400"></i>
                     </div>
                     <input 
-                        type="text" 
-                        id="username" 
+                        type="email" 
+                        id="email" 
                         required
                         class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900"
-                        placeholder="Enter username"
-                        autocomplete="username"
+                        placeholder="Enter email"
+                        autocomplete="email"
                     >
                 </div>
             </div>
@@ -93,8 +97,9 @@
                 </div>
             </div>
 
-            <button type="submit" class="login-btn w-full text-white rounded-xl py-3 px-6 font-bold text-base shadow-lg mt-2">
-                SIGN IN
+            <button type="submit" id="loginBtn" class="login-btn w-full text-white rounded-xl py-3 px-6 font-bold text-base shadow-lg mt-2">
+                <span id="loginBtnText">SIGN IN</span>
+                <i id="loginSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
             </button>
         </form>
 
@@ -104,75 +109,115 @@
             <div class="space-y-2 text-xs text-gray-500">
                 <div class="flex justify-between">
                     <span class="font-semibold">Admin:</span>
-                    <span>jemag / cheeseburger</span>
+                    <span>jem@commotion.studio</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-semibold">Client:</span>
-                    <span>ethanw / robinsons</span>
+                    <span>ethan@rhythmandalps.co.nz</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-semibold">Crew:</span>
-                    <span>samk / nurse</span>
+                    <span>sam@crewmail.com</span>
                 </div>
+                <p class="text-center text-gray-400 mt-2">Password: demo123</p>
             </div>
         </div>
     </div>
 
+    <script src="js/firebase-config.js"></script>
     <script>
-        const USERS = {
-            'jemag': {
-                password: 'cheeseburger',
-                role: 'admin',
-                fullName: 'Jem Anderson-Gardner',
-                userId: 'user-admin-001'
-            },
-            'ethanw': {
-                password: 'robinsons',
-                role: 'client',
-                fullName: 'Ethan Walter',
-                userId: 'user-client-001',
-                clientId: 'client-001'
-            },
-            'samk': {
-                password: 'nurse',
-                role: 'crew',
-                fullName: 'Sam King',
-                userId: 'user-crew-001',
-                crewId: 'crew-sam'
+        // Check if already logged in
+        onAuthStateChange(async (user) => {
+            if (user) {
+                // User is signed in, get their profile from Firestore
+                const userProfile = await firestoreHelpers.getDoc('users', user.uid);
+                if (userProfile) {
+                    localStorage.setItem('userRole', userProfile.role);
+                    localStorage.setItem('userName', userProfile.fullName);
+                    localStorage.setItem('userId', user.uid);
+                    if (userProfile.clientId) localStorage.setItem('clientId', userProfile.clientId);
+                    if (userProfile.crewId) localStorage.setItem('crewId', userProfile.crewId);
+                    window.location.href = 'dashboard.html';
+                }
             }
-        };
+        });
 
-        function handleLogin(event) {
+        async function handleLogin(event) {
             event.preventDefault();
             
-            const username = document.getElementById('username').value.toLowerCase().trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            const loginSpinner = document.getElementById('loginSpinner');
             
-            const user = USERS[username];
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtnText.textContent = 'SIGNING IN...';
+            loginSpinner.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
             
-            if (!user) {
-                errorText.textContent = 'Username not found';
+            try {
+                const result = await signIn(email, password);
+                
+                if (!result.success) {
+                    let errorMsg = 'Invalid email or password';
+                    if (result.code === 'auth/user-not-found') {
+                        errorMsg = 'No account found with this email';
+                    } else if (result.code === 'auth/wrong-password') {
+                        errorMsg = 'Incorrect password';
+                    } else if (result.code === 'auth/invalid-email') {
+                        errorMsg = 'Invalid email format';
+                    } else if (result.code === 'auth/too-many-requests') {
+                        errorMsg = 'Too many attempts. Please try again later';
+                    }
+                    
+                    errorText.textContent = errorMsg;
+                    errorMessage.classList.remove('hidden');
+                    
+                    // Reset button
+                    loginBtn.disabled = false;
+                    loginBtnText.textContent = 'SIGN IN';
+                    loginSpinner.classList.add('hidden');
+                    return;
+                }
+                
+                // Get user profile from Firestore
+                const userProfile = await firestoreHelpers.getDoc('users', result.user.uid);
+                
+                if (!userProfile) {
+                    errorText.textContent = 'User profile not found. Please contact admin.';
+                    errorMessage.classList.remove('hidden');
+                    await signOut();
+                    
+                    loginBtn.disabled = false;
+                    loginBtnText.textContent = 'SIGN IN';
+                    loginSpinner.classList.add('hidden');
+                    return;
+                }
+                
+                // Store user data in localStorage
+                localStorage.setItem('userRole', userProfile.role);
+                localStorage.setItem('userName', userProfile.fullName);
+                localStorage.setItem('userId', result.user.uid);
+                
+                if (userProfile.clientId) localStorage.setItem('clientId', userProfile.clientId);
+                if (userProfile.crewId) localStorage.setItem('crewId', userProfile.crewId);
+                
+                // Redirect to dashboard
+                window.location.href = 'dashboard.html';
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                errorText.textContent = 'An error occurred. Please try again.';
                 errorMessage.classList.remove('hidden');
-                return;
+                
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'SIGN IN';
+                loginSpinner.classList.add('hidden');
             }
-            
-            if (user.password !== password) {
-                errorText.textContent = 'Incorrect password';
-                errorMessage.classList.remove('hidden');
-                return;
-            }
-            
-            localStorage.setItem('userRole', user.role);
-            localStorage.setItem('userName', user.fullName);
-            localStorage.setItem('userId', user.userId);
-            localStorage.setItem('username', username);
-            
-            if (user.clientId) localStorage.setItem('clientId', user.clientId);
-            if (user.crewId) localStorage.setItem('crewId', user.crewId);
-            
-            window.location.href = 'dashboard.html';
         }
     </script>
 

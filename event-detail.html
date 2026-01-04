@@ -6,6 +6,10 @@
     <title>Event Details - COMMOTION.APP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
         
@@ -123,8 +127,16 @@
         <div id="eventModalContent" class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"></div>
     </div>
 
+    <script src="js/firebase-config.js"></script>
     <script src="js/demo-data.js"></script>
     <script>
+        // Check authentication
+        onAuthStateChange((user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+            }
+        });
+        
         const urlParams = new URLSearchParams(window.location.search);
         const eventId = urlParams.get('id') || 'evt-001';
         const event = getEventById(eventId);
@@ -435,8 +447,10 @@
         }
 
         function logout() {
-            localStorage.clear();
-            window.location.href = 'index.html';
+            signOut().then(() => {
+                localStorage.clear();
+                window.location.href = 'index.html';
+            });
         }
 
         // Initial render
