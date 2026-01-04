@@ -305,8 +305,33 @@ function loadClientDashboard() {
                     </div>
                 </div>
             ` : ''}
+            
+            <!-- Account Settings -->
+            <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 mt-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-900"><i class="fas fa-cog mr-2 commotion-red"></i>Account Settings</h3>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-3">Account Information</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between p-2 bg-gray-50 rounded"><span class="text-gray-600">Email:</span><span class="font-semibold">${auth.currentUser?.email || '--'}</span></div>
+                            <div class="flex justify-between p-2 bg-gray-50 rounded"><span class="text-gray-600">Account Type:</span><span class="font-semibold">Client</span></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-3">Change Password</h4>
+                        <form onsubmit="event.preventDefault(); changeClientPassword();" class="space-y-3">
+                            <input type="password" id="clientCurrentPassword" placeholder="Current Password" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
+                            <input type="password" id="clientNewPassword" placeholder="New Password" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" minlength="6" required>
+                            <input type="password" id="clientConfirmPassword" placeholder="Confirm New Password" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
+                            <button type="submit" id="changeClientPasswordBtn" class="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-semibold">Update Password</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
+        <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
             <div id="modalContent" class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"></div>
         </div>
     `;
@@ -469,9 +494,11 @@ function renderCrewEarnings(crewMember, assignedEvents) {
         const days = Math.ceil((new Date(event.endDate) - new Date(event.startDate)) / (1000 * 60 * 60 * 24)) + 1;
         const amount = crewMember.rate * days;
         totalOwed += amount;
-        eventEarnings.push({ name: event.name, days, amount });
+        const eventPayments = crewMember.eventPayments || {};
+        const isPaid = eventPayments[event.id] === true;
+        eventEarnings.push({ id: event.id, name: event.name, days, amount, isPaid });
     });
-    const totalPaid = crewMember.paidAmount || 0;
+    const totalPaid = eventEarnings.filter(e => e.isPaid).reduce((sum, e) => sum + e.amount, 0);
     const balance = totalOwed - totalPaid;
     
     container.innerHTML = `
@@ -482,16 +509,49 @@ function renderCrewEarnings(crewMember, assignedEvents) {
         </div>
         <div class="space-y-2">
             ${eventEarnings.map(e => `
-                <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <div>
                         <p class="text-sm font-semibold">${e.name}</p>
                         <p class="text-xs text-gray-500">${e.days} days @ $${crewMember.rate}/day</p>
                     </div>
-                    <span class="font-bold text-sm">$${e.amount.toLocaleString()}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-sm">$${e.amount.toLocaleString()}</span>
+                        <button onclick="confirmCrewPayment('${e.id}', ${!e.isPaid})" class="px-3 py-1 rounded-full text-xs font-semibold ${e.isPaid ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}">
+                            <i class="fas ${e.isPaid ? 'fa-check-circle' : 'fa-circle'} mr-1"></i>${e.isPaid ? 'Paid' : 'Confirm Paid'}
+                        </button>
+                    </div>
                 </div>
             `).join('')}
         </div>
     `;
+}
+
+async function confirmCrewPayment(eventId, isPaid) {
+    const crewMember = FIRESTORE_DATA.crew.find(c => c.id === crewId);
+    if (!crewMember) return;
+    
+    const eventPayments = crewMember.eventPayments || {};
+    eventPayments[eventId] = isPaid;
+    
+    // Recalculate total paid
+    let totalPaid = 0;
+    for (const [evtId, paid] of Object.entries(eventPayments)) {
+        if (paid) {
+            const evt = FIRESTORE_DATA.events.find(e => e.id === evtId);
+            if (evt) {
+                const days = Math.ceil((new Date(evt.endDate) - new Date(evt.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+                totalPaid += crewMember.rate * days;
+            }
+        }
+    }
+    
+    await firestoreHelpers.updateDoc('crew', crewId, { 
+        eventPayments: eventPayments,
+        paidAmount: totalPaid
+    });
+    
+    await loadFirestoreData();
+    loadCrewDashboard();
 }
 
 // Calendar Functions
@@ -906,7 +966,7 @@ function renderManageClientsModal() {
 
 function renderAdminSettingsModal() {
     // Find or create admin crew profile
-    const adminCrew = FIRESTORE_DATA.crew.find(c => c.email === 'jem@commotion.studio') || { name: userName, role: 'Admin', rate: 500, phone: '', email: 'jem@commotion.studio' };
+    const adminCrew = FIRESTORE_DATA.crew.find(c => c.email === 'jem@commotion.studio') || { name: userName, role: 'Admin', rate: 500, phone: '', email: 'jem@commotion.studio', username: '' };
     
     return `
         <div class="p-6">
@@ -932,6 +992,19 @@ function renderAdminSettingsModal() {
                     </form>
                 </div>
                 
+                <!-- Username Section -->
+                <div class="border-b pb-4">
+                    <h3 class="font-semibold text-gray-900 mb-3"><i class="fas fa-at mr-2"></i>Login Username</h3>
+                    <p class="text-xs text-gray-500 mb-3">Set a username for easier login (instead of typing full email)</p>
+                    <form onsubmit="event.preventDefault(); saveUsername();" class="space-y-3">
+                        <div class="flex gap-2">
+                            <input type="text" id="adminUsername" value="${adminCrew.username || ''}" placeholder="e.g. jem" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" pattern="[a-z0-9]+" title="Lowercase letters and numbers only">
+                            <button type="submit" id="saveUsernameBtn" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-semibold">Save</button>
+                        </div>
+                        <p class="text-xs text-gray-400">Current email: ${adminCrew.email}</p>
+                    </form>
+                </div>
+                
                 <!-- Password Section -->
                 <div class="border-b pb-4">
                     <h3 class="font-semibold text-gray-900 mb-3"><i class="fas fa-key mr-2"></i>Change Password</h3>
@@ -954,7 +1027,7 @@ function renderAdminSettingsModal() {
 }
 
 function renderEditProfileModal() {
-    const crew = FIRESTORE_DATA.crew.find(c => c.id === crewId) || { name: userName, role: 'Crew', rate: 350, phone: '', email: '' };
+    const crew = FIRESTORE_DATA.crew.find(c => c.id === crewId) || { name: userName, role: 'Crew', rate: 350, phone: '', email: '', username: '' };
     return `
         <div class="p-6">
             <div class="flex justify-between items-center mb-6">
@@ -968,15 +1041,29 @@ function renderEditProfileModal() {
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Phone</label><input type="tel" id="profilePhone" value="${crew.phone || ''}" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="profileEmail" value="${crew.email || ''}" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="profileEmail" value="${crew.email || ''}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" readonly></div>
                 </div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Day Rate ($)</label><input type="number" id="profileRate" value="${crew.rate}" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Day Rate ($)</label><input type="number" id="profileRate" value="${crew.rate}" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Login Username</label><input type="text" id="profileUsername" value="${crew.username || ''}" placeholder="e.g. sam" pattern="[a-z0-9]+" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                </div>
                 <div class="flex items-center"><input type="checkbox" id="profileAvailable" ${crew.available ? 'checked' : ''} class="mr-2"><label class="text-sm text-gray-700">Available for bookings</label></div>
                 <div class="flex gap-3 pt-4">
-                    <button type="submit" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
+                    <button type="submit" id="saveProfileBtn" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
                     <button type="button" onclick="closeModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
                 </div>
             </form>
+            
+            <!-- Password Change Section -->
+            <div class="border-t border-gray-200 mt-6 pt-6">
+                <h3 class="font-semibold text-gray-900 mb-4"><i class="fas fa-lock mr-2 text-gray-400"></i>Change Password</h3>
+                <form onsubmit="event.preventDefault(); changeCrewPassword();" class="space-y-3">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label><input type="password" id="currentPassword" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">New Password</label><input type="password" id="newPassword" class="w-full px-3 py-2 border border-gray-300 rounded-lg" minlength="6" required></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label><input type="password" id="confirmPassword" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required></div>
+                    <button type="submit" id="changeCrewPasswordBtn" class="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-semibold">Update Password</button>
+                </form>
+            </div>
         </div>
     `;
 }
@@ -1375,14 +1462,30 @@ async function saveProfile() {
         btn.textContent = 'Saving...';
     }
     
+    const username = document.getElementById('profileUsername')?.value?.toLowerCase()?.trim() || '';
+    const crew = FIRESTORE_DATA.crew.find(c => c.id === crewId);
+    
     const updates = {
         name: document.getElementById('profileName').value,
         role: document.getElementById('profileRole').value,
         phone: document.getElementById('profilePhone').value,
-        email: document.getElementById('profileEmail').value,
         rate: parseInt(document.getElementById('profileRate').value),
-        available: document.getElementById('profileAvailable').checked
+        available: document.getElementById('profileAvailable').checked,
+        username: username
     };
+    
+    // If username was set, save the username mapping
+    if (username && crew?.email) {
+        try {
+            await firestoreHelpers.setDoc('usernames', username, {
+                email: crew.email,
+                crewId: crewId,
+                createdAt: new Date().toISOString()
+            });
+        } catch (e) {
+            console.error('Error saving username:', e);
+        }
+    }
     
     const result = await firestoreHelpers.updateDoc('crew', crewId, updates);
     
@@ -2075,6 +2178,130 @@ async function changeAdminPassword() {
         alert('Error: ' + error.message);
         btn.disabled = false;
         btn.textContent = 'Update Password';
+    }
+}
+
+async function changeCrewPassword() {
+    const btn = document.getElementById('changeCrewPasswordBtn');
+    const currentPass = document.getElementById('currentPassword').value;
+    const newPass = document.getElementById('newPassword').value;
+    const confirmPass = document.getElementById('confirmPassword').value;
+    
+    if (newPass !== confirmPass) {
+        alert('Passwords do not match');
+        return;
+    }
+    
+    if (newPass.length < 6) {
+        alert('Password must be at least 6 characters');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = 'Updating...';
+    
+    try {
+        const user = auth.currentUser;
+        // Reauthenticate first
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPass);
+        await user.reauthenticateWithCredential(credential);
+        // Then update password
+        await user.updatePassword(newPass);
+        btn.textContent = 'Updated!';
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'Update Password'; }, 1500);
+    } catch (error) {
+        if (error.code === 'auth/wrong-password') {
+            alert('Current password is incorrect');
+        } else {
+            alert('Error: ' + error.message);
+        }
+        btn.disabled = false;
+        btn.textContent = 'Update Password';
+    }
+}
+
+async function changeClientPassword() {
+    const btn = document.getElementById('changeClientPasswordBtn');
+    const currentPass = document.getElementById('clientCurrentPassword').value;
+    const newPass = document.getElementById('clientNewPassword').value;
+    const confirmPass = document.getElementById('clientConfirmPassword').value;
+    
+    if (newPass !== confirmPass) {
+        alert('Passwords do not match');
+        return;
+    }
+    
+    if (newPass.length < 6) {
+        alert('Password must be at least 6 characters');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = 'Updating...';
+    
+    try {
+        const user = auth.currentUser;
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPass);
+        await user.reauthenticateWithCredential(credential);
+        await user.updatePassword(newPass);
+        btn.textContent = 'Updated!';
+        document.getElementById('clientCurrentPassword').value = '';
+        document.getElementById('clientNewPassword').value = '';
+        document.getElementById('clientConfirmPassword').value = '';
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'Update Password'; }, 1500);
+    } catch (error) {
+        if (error.code === 'auth/wrong-password') {
+            alert('Current password is incorrect');
+        } else {
+            alert('Error: ' + error.message);
+        }
+        btn.disabled = false;
+        btn.textContent = 'Update Password';
+    }
+}
+
+async function saveUsername() {
+    const btn = document.getElementById('saveUsernameBtn');
+    const username = document.getElementById('adminUsername').value.toLowerCase().trim();
+    
+    if (!username) {
+        alert('Please enter a username');
+        return;
+    }
+    
+    if (!/^[a-z0-9]+$/.test(username)) {
+        alert('Username can only contain lowercase letters and numbers');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    
+    try {
+        const user = auth.currentUser;
+        
+        // Save username mapping to Firestore
+        await firestoreHelpers.setDoc('usernames', username, {
+            email: user.email,
+            userId: user.uid,
+            createdAt: new Date().toISOString()
+        });
+        
+        // Also update the crew profile if exists
+        const adminCrew = FIRESTORE_DATA.crew.find(c => c.email === user.email);
+        if (adminCrew) {
+            await firestoreHelpers.updateDoc('crew', adminCrew.id, { username: username });
+        }
+        
+        btn.textContent = 'Saved!';
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'Save'; }, 1500);
+    } catch (error) {
+        alert('Error: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = 'Save';
     }
 }
 

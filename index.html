@@ -175,16 +175,29 @@
             loginSpinner.classList.remove('hidden');
             errorMessage.classList.add('hidden');
             
-            // Username to email mapping
-            const usernameMap = {
+            // Default username to email mapping (fallback)
+            const defaultUsernames = {
                 'jem': 'jem@commotion.studio',
                 'ethan': 'ethan@rhythmandalps.co.nz',
                 'sam': 'sam@crewmail.com'
             };
             
-            // Check if input is a username (no @ symbol)
-            if (!email.includes('@') && usernameMap[email.toLowerCase()]) {
-                email = usernameMap[email.toLowerCase()];
+            // Check if input is a username (no @ symbol) - try to look up from Firestore first
+            if (!email.includes('@')) {
+                try {
+                    // Try to get custom username mapping from Firestore
+                    const usernameDoc = await firestoreHelpers.getDoc('usernames', email.toLowerCase());
+                    if (usernameDoc && usernameDoc.email) {
+                        email = usernameDoc.email;
+                    } else if (defaultUsernames[email.toLowerCase()]) {
+                        email = defaultUsernames[email.toLowerCase()];
+                    }
+                } catch (e) {
+                    // Fall back to default mapping
+                    if (defaultUsernames[email.toLowerCase()]) {
+                        email = defaultUsernames[email.toLowerCase()];
+                    }
+                }
             }
             
             try {
