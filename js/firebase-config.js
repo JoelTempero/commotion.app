@@ -51,32 +51,39 @@ function getCurrentUser() {
 
 // Firestore helpers
 const firestoreHelpers = {
-    // Get a single document
+    // Get a single document with timeout
     async getDoc(collection, docId) {
         try {
-            const doc = await db.collection(collection).doc(docId).get();
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Request timeout')), 10000)
+            );
+            const fetchPromise = db.collection(collection).doc(docId).get();
+            const doc = await Promise.race([fetchPromise, timeoutPromise]);
             if (doc.exists) {
                 return { id: doc.id, ...doc.data() };
             }
             return null;
         } catch (error) {
             console.error(`Error getting ${collection}/${docId}:`, error);
-            return null;
+            throw error;
         }
     },
 
     // Get all documents in a collection
     async getCollection(collection, orderByField = null, orderDirection = 'asc') {
         try {
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Request timeout')), 10000)
+            );
             let query = db.collection(collection);
             if (orderByField) {
                 query = query.orderBy(orderByField, orderDirection);
             }
-            const snapshot = await query.get();
+            const snapshot = await Promise.race([query.get(), timeoutPromise]);
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (error) {
             console.error(`Error getting collection ${collection}:`, error);
-            return [];
+            throw error;
         }
     },
 

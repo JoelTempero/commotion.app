@@ -134,6 +134,11 @@
         const userRole = localStorage.getItem('userRole') || 'admin';
         const userName = localStorage.getItem('userName') || 'User';
         
+        // Check if logged in via localStorage (same as dashboard)
+        if (!localStorage.getItem('userRole') || !localStorage.getItem('userName')) {
+            window.location.href = 'index.html';
+        }
+        
         document.getElementById('userName').textContent = userName;
 
         // Global data storage
@@ -142,16 +147,6 @@
         let gearData = [];
         let clientsData = [];
 
-        // Check authentication and load data
-        onAuthStateChange((user) => {
-            if (!user) {
-                window.location.href = 'index.html';
-            } else {
-                // User is authenticated, load the data
-                loadData();
-            }
-        });
-
         // Load all data from Firestore
         async function loadData() {
             try {
@@ -159,7 +154,7 @@
                 eventData = await firestoreHelpers.getDoc('events', eventId);
                 
                 if (!eventData) {
-                    document.getElementById('tabContent').innerHTML = '<div class="text-center py-12"><p class="text-red-600">Event not found</p></div>';
+                    document.getElementById('tabContent').innerHTML = '<div class="text-center py-12"><p class="text-red-600">Event not found: ' + eventId + '</p><a href="dashboard.html" class="text-blue-600 underline">Back to Dashboard</a></div>';
                     return;
                 }
                 
@@ -195,9 +190,12 @@
                 
             } catch (error) {
                 console.error('Error loading data:', error);
-                document.getElementById('tabContent').innerHTML = '<div class="text-center py-12"><p class="text-red-600">Error loading event data</p></div>';
+                document.getElementById('tabContent').innerHTML = '<div class="text-center py-12"><p class="text-red-600">Error loading event data: ' + error.message + '</p><a href="dashboard.html" class="text-blue-600 underline">Back to Dashboard</a></div>';
             }
         }
+        
+        // Start loading immediately
+        loadData();
 
         let currentTab = 'overview';
 
