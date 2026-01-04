@@ -118,7 +118,6 @@
     </div>
 
     <script src="js/firebase-config.js"></script>
-    <script src="js/demo-data.js"></script>
     <script>
         // Check authentication
         onAuthStateChange((user) => {
@@ -135,18 +134,38 @@
             document.getElementById('addGearSection').classList.remove('hidden');
         }
 
-        // Stats
-        document.getElementById('totalValue').textContent = '$' + DEMO_DATA.gear.reduce((sum, g) => sum + g.value, 0).toLocaleString();
-        document.getElementById('totalItems').textContent = DEMO_DATA.gear.length;
-        document.getElementById('availableItems').textContent = DEMO_DATA.gear.filter(g => g.status === 'available').length;
-        document.getElementById('inUseItems').textContent = DEMO_DATA.gear.filter(g => g.status === 'in-use').length;
-
+        // Global data
+        let gearData = [];
+        let eventsData = [];
         let currentFilter = 'all';
         let currentOwner = 'all';
 
+        // Load data from Firestore
+        async function loadGearData() {
+            try {
+                const [gear, events] = await Promise.all([
+                    firestoreHelpers.getCollection('gear'),
+                    firestoreHelpers.getCollection('events')
+                ]);
+                
+                gearData = gear;
+                eventsData = events;
+                
+                // Update stats
+                document.getElementById('totalValue').textContent = '$' + gearData.reduce((sum, g) => sum + g.value, 0).toLocaleString();
+                document.getElementById('totalItems').textContent = gearData.length;
+                document.getElementById('availableItems').textContent = gearData.filter(g => g.status === 'available').length;
+                document.getElementById('inUseItems').textContent = gearData.filter(g => g.status === 'in-use').length;
+                
+                renderGear();
+            } catch (error) {
+                console.error('Error loading gear data:', error);
+            }
+        }
+
         function renderGear() {
             const grid = document.getElementById('gearGrid');
-            let filtered = DEMO_DATA.gear;
+            let filtered = gearData;
             
             if (currentFilter !== 'all') {
                 filtered = filtered.filter(g => g.category === currentFilter);
@@ -157,7 +176,7 @@
 
             grid.innerHTML = filtered.map(gear => {
                 const isAvailable = gear.status === 'available';
-                const assignedEvent = gear.assignedTo ? DEMO_DATA.events.find(e => e.id === gear.assignedTo) : null;
+                const assignedEvent = gear.assignedTo ? eventsData.find(e => e.id === gear.assignedTo) : null;
                 
                 return `
                     <div class="gear-card bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100">
@@ -359,7 +378,8 @@
             });
         }
 
-        renderGear();
+        // Initialize
+        loadGearData();
     </script>
 
 </body>

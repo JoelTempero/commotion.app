@@ -19,19 +19,72 @@ document.getElementById('userRole').textContent = userRole;
 let currentCalendarDate = new Date(2025, 0, 5);
 let calendarView = 'month';
 
-// Load appropriate dashboard based on role
-if (userRole === 'admin') {
-    loadAdminDashboard();
-} else if (userRole === 'client') {
-    loadClientDashboard();
-} else if (userRole === 'crew') {
-    loadCrewDashboard();
+// Global Firestore data storage
+let FIRESTORE_DATA = {
+    events: [],
+    crew: [],
+    gear: [],
+    clients: [],
+    tasks: []
+};
+
+// Load data from Firestore
+async function loadFirestoreData() {
+    try {
+        const [events, crew, gear, clients, tasks] = await Promise.all([
+            firestoreHelpers.getCollection('events'),
+            firestoreHelpers.getCollection('crew'),
+            firestoreHelpers.getCollection('gear'),
+            firestoreHelpers.getCollection('clients'),
+            firestoreHelpers.getCollection('tasks')
+        ]);
+        
+        FIRESTORE_DATA.events = events;
+        FIRESTORE_DATA.crew = crew;
+        FIRESTORE_DATA.gear = gear;
+        FIRESTORE_DATA.clients = clients;
+        FIRESTORE_DATA.tasks = tasks;
+        
+        return true;
+    } catch (error) {
+        console.error('Error loading Firestore data:', error);
+        return false;
+    }
 }
 
+// Initialize dashboard
+async function initDashboard() {
+    const loaded = await loadFirestoreData();
+    
+    if (!loaded) {
+        document.getElementById('dashboardContent').innerHTML = `
+            <div class="max-w-2xl mx-auto px-4 py-16 text-center">
+                <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Connection Error</h2>
+                <p class="text-gray-600 mb-4">Could not load data from database.</p>
+                <button onclick="window.location.reload()" class="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700">Retry</button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Load appropriate dashboard based on role
+    if (userRole === 'admin') {
+        loadAdminDashboard();
+    } else if (userRole === 'client') {
+        loadClientDashboard();
+    } else if (userRole === 'crew') {
+        loadCrewDashboard();
+    }
+}
+
+// Start initialization
+initDashboard();
+
 function loadAdminDashboard() {
-    const totalGearValue = DEMO_DATA.gear.reduce((sum, g) => sum + g.value, 0);
-    const activeEvents = DEMO_DATA.events.filter(e => e.status !== 'completed' && e.status !== 'cancelled').length;
-    const availableCrew = DEMO_DATA.crew.filter(c => c.available).length;
+    const totalGearValue = FIRESTORE_DATA.gear.reduce((sum, g) => sum + g.value, 0);
+    const activeEvents = FIRESTORE_DATA.events.filter(e => e.status !== 'completed' && e.status !== 'cancelled').length;
+    const availableCrew = FIRESTORE_DATA.crew.filter(c => c.available).length;
     
     document.getElementById('dashboardContent').innerHTML = `
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -67,7 +120,7 @@ function loadAdminDashboard() {
                     <div class="flex items-center justify-between">
                         <div class="min-w-0 flex-1">
                             <p class="text-xs sm:text-sm font-medium text-gray-600">Crew</p>
-                            <p class="text-lg sm:text-2xl font-bold text-gray-900 mt-1">${DEMO_DATA.crew.length}</p>
+                            <p class="text-lg sm:text-2xl font-bold text-gray-900 mt-1">${FIRESTORE_DATA.crew.length}</p>
                             <p class="text-xs commotion-red mt-1 hidden sm:block"><i class="fas fa-user-check"></i> ${availableCrew} free</p>
                         </div>
                         <div class="bg-red-100 rounded-full p-2 sm:p-3 ml-2"><i class="fas fa-users commotion-red text-sm sm:text-xl"></i></div>
@@ -147,7 +200,7 @@ function loadAdminDashboard() {
 }
 
 function loadClientDashboard() {
-    const clientEvents = DEMO_DATA.events.filter(e => e.client_id === clientId);
+    const clientEvents = FIRESTORE_DATA.events.filter(e => e.client_id === clientId);
     const mainEvent = clientEvents[0];
     
     if (!mainEvent) {
@@ -229,7 +282,7 @@ function loadClientDashboard() {
                     <h3 class="text-lg font-bold text-gray-900 mb-4"><i class="fas fa-users mr-2 commotion-red"></i>Your Crew</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         ${mainEvent.crewAssigned.map(cId => {
-                            const crew = DEMO_DATA.crew.find(c => c.id === cId);
+                            const crew = FIRESTORE_DATA.crew.find(c => c.id === cId);
                             if (!crew) return '';
                             return `
                                 <div class="flex items-center p-3 bg-gray-50 rounded-lg">
@@ -256,10 +309,10 @@ function loadClientDashboard() {
 }
 
 function loadCrewDashboard() {
-    const crewMember = DEMO_DATA.crew.find(c => c.id === crewId) || { name: userName, role: 'Crew', rate: 350 };
-    const assignedEvents = DEMO_DATA.events.filter(e => e.crewAssigned && e.crewAssigned.includes(crewId));
-    const assignedTasks = DEMO_DATA.tasks.filter(t => t.assignedTo === crewId);
-    const myGear = DEMO_DATA.gear.filter(g => g.ownerId === crewId);
+    const crewMember = FIRESTORE_DATA.crew.find(c => c.id === crewId) || { name: userName, role: 'Crew', rate: 350 };
+    const assignedEvents = FIRESTORE_DATA.events.filter(e => e.crewAssigned && e.crewAssigned.includes(crewId));
+    const assignedTasks = FIRESTORE_DATA.tasks.filter(t => t.assignedTo === crewId);
+    const myGear = FIRESTORE_DATA.gear.filter(g => g.ownerId === crewId);
     const pendingTasks = assignedTasks.filter(t => t.status !== 'done').length;
     const upcomingEvents = assignedEvents.filter(e => new Date(e.startDate) > new Date('2025-01-03')).length;
 
@@ -321,7 +374,7 @@ function loadCrewDashboard() {
                     ${assignedTasks.length > 0 ? `
                         <div class="space-y-3">
                             ${assignedTasks.map(task => {
-                                const event = DEMO_DATA.events.find(e => e.id === task.eventId);
+                                const event = FIRESTORE_DATA.events.find(e => e.id === task.eventId);
                                 return `
                                     <div class="p-3 rounded-lg border ${task.status === 'done' ? 'bg-green-50 border-green-200' : task.status === 'in-progress' ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-gray-200'}">
                                         <div class="flex items-start justify-between mb-2">
@@ -428,7 +481,7 @@ function renderMonthView(container) {
     // On mobile, show a list view instead of grid
     if (isMobile) {
         let html = '<div class="space-y-2">';
-        const eventsThisMonth = DEMO_DATA.events.filter(e => {
+        const eventsThisMonth = FIRESTORE_DATA.events.filter(e => {
             const start = new Date(e.startDate);
             const end = new Date(e.endDate);
             return (start.getMonth() === month && start.getFullYear() === year) || 
@@ -466,7 +519,7 @@ function renderMonthView(container) {
     
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const eventsOnDay = DEMO_DATA.events.filter(e => dateStr >= e.startDate && dateStr <= e.endDate);
+        const eventsOnDay = FIRESTORE_DATA.events.filter(e => dateStr >= e.startDate && dateStr <= e.endDate);
         const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
         
         html += `<div class="calendar-day ${isToday ? 'bg-red-50 border-red-200' : 'bg-white'} min-h-[80px] border border-gray-200 rounded">
@@ -496,7 +549,7 @@ function renderWeekView(container) {
         date.setDate(date.getDate() + i);
         const dateStr = date.toISOString().split('T')[0];
         
-        DEMO_DATA.events.forEach(evt => {
+        FIRESTORE_DATA.events.forEach(evt => {
             if (evt.schedule && dateStr >= evt.startDate && dateStr <= evt.endDate) {
                 const daySchedule = evt.schedule.find(s => s.date === dateStr);
                 if (daySchedule) {
@@ -524,7 +577,7 @@ function renderWeekView(container) {
             const dateStr = date.toISOString().split('T')[0];
             const isToday = date.toDateString() === new Date().toDateString();
             const dayItems = weekSchedule.filter(s => s.dayIndex === i).sort((a,b) => a.time.localeCompare(b.time));
-            const eventsOnDay = DEMO_DATA.events.filter(e => dateStr >= e.startDate && dateStr <= e.endDate);
+            const eventsOnDay = FIRESTORE_DATA.events.filter(e => dateStr >= e.startDate && dateStr <= e.endDate);
             
             if (eventsOnDay.length > 0 || dayItems.length > 0) {
                 html += `<div class="border-l-4 ${isToday ? 'border-red-500 bg-red-50' : 'border-gray-300'} pl-3 py-2 rounded-r">
@@ -550,7 +603,7 @@ function renderWeekView(container) {
                 html += '</div>';
             }
         }
-        if (weekSchedule.length === 0 && DEMO_DATA.events.filter(e => {
+        if (weekSchedule.length === 0 && FIRESTORE_DATA.events.filter(e => {
             for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(d.getDate()+i);const ds=d.toISOString().split('T')[0];if(ds>=e.startDate&&ds<=e.endDate)return true;}return false;
         }).length === 0) {
             html += '<div class="text-center py-8 text-gray-500">No events this week</div>';
@@ -594,7 +647,7 @@ function renderWeekView(container) {
             });
             
             // Find events on this day
-            const eventsOnDay = DEMO_DATA.events.filter(e => dateStr >= e.startDate && dateStr <= e.endDate);
+            const eventsOnDay = FIRESTORE_DATA.events.filter(e => dateStr >= e.startDate && dateStr <= e.endDate);
             
             html += `<div class="border-l min-h-[50px] p-1">`;
             if (items.length > 0) {
@@ -644,7 +697,7 @@ function renderAllEvents() {
 
     const statusColors = {'confirmed': 'green', 'quote-sent': 'yellow', 'in-progress': 'blue', 'completed': 'gray', 'lead': 'gray'};
     
-    container.innerHTML = DEMO_DATA.events.map(event => `
+    container.innerHTML = FIRESTORE_DATA.events.map(event => `
         <div class="event-card bg-white rounded-lg p-3 sm:p-4 border border-gray-200" style="border-left: 4px solid ${event.color}" onclick="viewEvent('${event.id}')">
             <div class="flex justify-between items-start mb-2">
                 <h3 class="font-semibold text-gray-900 text-sm">${event.name}</h3>
@@ -684,7 +737,7 @@ function showModal(type, id = null) {
             break;
         case 'editSchedule':
         case 'eventSchedule':
-            const event = DEMO_DATA.events.find(e => e.id === id);
+            const event = FIRESTORE_DATA.events.find(e => e.id === id);
             content.innerHTML = renderScheduleModal(event);
             break;
         default:
@@ -709,7 +762,7 @@ function renderNewEventModal() {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Event Name</label><input type="text" id="newEventName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="Festival Name 2025" required></div>
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Client</label><select id="newEventClient" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                        ${DEMO_DATA.clients.map(c => `<option value="${c.id}">${c.company}</option>`).join('')}
+                        ${FIRESTORE_DATA.clients.map(c => `<option value="${c.id}">${c.company}</option>`).join('')}
                         <option value="new">+ Add New Client</option>
                     </select></div>
                 </div>
@@ -740,7 +793,7 @@ function renderManageCrewModal() {
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             </div>
             <div class="space-y-3 max-h-96 overflow-y-auto">
-                ${DEMO_DATA.crew.map(crew => `
+                ${FIRESTORE_DATA.crew.map(crew => `
                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                         <div class="flex items-center">
                             <div class="w-10 h-10 rounded-full bg-commotion-red text-white flex items-center justify-center font-bold mr-3">${crew.name.split(' ').map(n => n[0]).join('')}</div>
@@ -762,7 +815,7 @@ function renderManageCrewModal() {
 }
 
 function renderEditProfileModal() {
-    const crew = DEMO_DATA.crew.find(c => c.id === crewId) || { name: userName, role: 'Crew', rate: 350, phone: '', email: '' };
+    const crew = FIRESTORE_DATA.crew.find(c => c.id === crewId) || { name: userName, role: 'Crew', rate: 350, phone: '', email: '' };
     return `
         <div class="p-6">
             <div class="flex justify-between items-center mb-6">
@@ -790,7 +843,7 @@ function renderEditProfileModal() {
 }
 
 function renderAddGearModal() {
-    const crewMember = DEMO_DATA.crew.find(c => c.id === crewId) || { name: userName };
+    const crewMember = FIRESTORE_DATA.crew.find(c => c.id === crewId) || { name: userName };
     return `
         <div class="p-6">
             <div class="flex justify-between items-center mb-6">
@@ -856,7 +909,7 @@ function renderScheduleModal(event) {
                                         <span class="text-sm font-semibold commotion-red w-14 flex-shrink-0">${item.time}</span>
                                         <div class="flex-1">
                                             <p class="text-sm font-medium text-gray-900">${item.activity}</p>
-                                            ${item.crew && item.crew.length > 0 ? `<p class="text-xs text-gray-500 mt-1"><i class="fas fa-users mr-1"></i>${item.crew.map(c => DEMO_DATA.crew.find(cr => cr.id === c)?.name || c).join(', ')}</p>` : ''}
+                                            ${item.crew && item.crew.length > 0 ? `<p class="text-xs text-gray-500 mt-1"><i class="fas fa-users mr-1"></i>${item.crew.map(c => FIRESTORE_DATA.crew.find(cr => cr.id === c)?.name || c).join(', ')}</p>` : ''}
                                         </div>
                                         ${isClient ? '<i class="fas fa-edit text-gray-400 ml-2"></i>' : ''}
                                     </div>
@@ -919,9 +972,9 @@ function showStatDetail(type) {
 }
 
 function renderRevenueDetail() {
-    const paidEvents = DEMO_DATA.events.filter(e => e.paidAmount > 0);
-    const totalQuoted = DEMO_DATA.events.reduce((sum, e) => sum + e.quoteAmount, 0);
-    const totalPaid = DEMO_DATA.events.reduce((sum, e) => sum + e.paidAmount, 0);
+    const paidEvents = FIRESTORE_DATA.events.filter(e => e.paidAmount > 0);
+    const totalQuoted = FIRESTORE_DATA.events.reduce((sum, e) => sum + e.quoteAmount, 0);
+    const totalPaid = FIRESTORE_DATA.events.reduce((sum, e) => sum + e.paidAmount, 0);
     
     return `
         <div class="p-6">
@@ -936,7 +989,7 @@ function renderRevenueDetail() {
             </div>
             <h3 class="font-semibold text-gray-900 mb-3">Payment Status by Event</h3>
             <div class="space-y-2 max-h-64 overflow-y-auto">
-                ${DEMO_DATA.events.filter(e => e.quoteAmount > 0).map(e => `
+                ${FIRESTORE_DATA.events.filter(e => e.quoteAmount > 0).map(e => `
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div><p class="font-semibold text-sm">${e.name}</p><p class="text-xs text-gray-500">${e.paymentStatus}</p></div>
                         <div class="text-right"><p class="font-bold text-sm">$${e.paidAmount.toLocaleString()} <span class="text-gray-400">/ $${e.quoteAmount.toLocaleString()}</span></p>
@@ -951,7 +1004,7 @@ function renderRevenueDetail() {
 
 function renderEventsDetail() {
     const byStatus = {confirmed: [], 'in-progress': [], 'quote-sent': [], lead: [], completed: []};
-    DEMO_DATA.events.forEach(e => { if(byStatus[e.status]) byStatus[e.status].push(e); });
+    FIRESTORE_DATA.events.forEach(e => { if(byStatus[e.status]) byStatus[e.status].push(e); });
     
     return `
         <div class="p-6">
@@ -967,7 +1020,7 @@ function renderEventsDetail() {
                 <div class="p-3 bg-gray-50 rounded-lg"><p class="text-xl font-bold text-gray-400">${byStatus.completed.length}</p><p class="text-xs">Done</p></div>
             </div>
             <div class="space-y-2 max-h-64 overflow-y-auto">
-                ${DEMO_DATA.events.map(e => `
+                ${FIRESTORE_DATA.events.map(e => `
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100" onclick="closeModal(); viewEvent('${e.id}')">
                         <div class="flex items-center"><div class="w-2 h-2 rounded-full mr-3" style="background-color: ${e.color}"></div><div><p class="font-semibold text-sm">${e.name}</p><p class="text-xs text-gray-500">${formatDateRange(e.startDate, e.endDate)}</p></div></div>
                         <span class="px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(e.status)}">${getStatusLabel(e.status)}</span>
@@ -979,8 +1032,8 @@ function renderEventsDetail() {
 }
 
 function renderCrewDetail() {
-    const available = DEMO_DATA.crew.filter(c => c.available);
-    const busy = DEMO_DATA.crew.filter(c => !c.available);
+    const available = FIRESTORE_DATA.crew.filter(c => c.available);
+    const busy = FIRESTORE_DATA.crew.filter(c => !c.available);
     
     return `
         <div class="p-6">
@@ -993,7 +1046,7 @@ function renderCrewDetail() {
                 <div class="text-center p-4 bg-red-50 rounded-lg"><p class="text-2xl font-bold commotion-red">${busy.length}</p><p class="text-xs text-gray-600">Busy</p></div>
             </div>
             <div class="space-y-2 max-h-64 overflow-y-auto">
-                ${DEMO_DATA.crew.map(c => `
+                ${FIRESTORE_DATA.crew.map(c => `
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div class="flex items-center">
                             <div class="w-8 h-8 rounded-full bg-commotion-red text-white flex items-center justify-center text-xs font-bold mr-3">${c.name.split(' ').map(n => n[0]).join('')}</div>
@@ -1009,12 +1062,12 @@ function renderCrewDetail() {
 
 function renderGearDetail() {
     const byOwner = {};
-    DEMO_DATA.gear.forEach(g => {
+    FIRESTORE_DATA.gear.forEach(g => {
         if (!byOwner[g.owner]) byOwner[g.owner] = [];
         byOwner[g.owner].push(g);
     });
-    const available = DEMO_DATA.gear.filter(g => g.status === 'available').length;
-    const inUse = DEMO_DATA.gear.filter(g => g.status === 'in-use').length;
+    const available = FIRESTORE_DATA.gear.filter(g => g.status === 'available').length;
+    const inUse = FIRESTORE_DATA.gear.filter(g => g.status === 'in-use').length;
     
     return `
         <div class="p-6">
@@ -1023,7 +1076,7 @@ function renderGearDetail() {
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             </div>
             <div class="grid grid-cols-3 gap-4 mb-6">
-                <div class="text-center p-4 bg-orange-50 rounded-lg"><p class="text-2xl font-bold text-orange-600">$${DEMO_DATA.gear.reduce((s,g) => s+g.value, 0).toLocaleString()}</p><p class="text-xs text-gray-600">Total Value</p></div>
+                <div class="text-center p-4 bg-orange-50 rounded-lg"><p class="text-2xl font-bold text-orange-600">$${FIRESTORE_DATA.gear.reduce((s,g) => s+g.value, 0).toLocaleString()}</p><p class="text-xs text-gray-600">Total Value</p></div>
                 <div class="text-center p-4 bg-green-50 rounded-lg"><p class="text-2xl font-bold text-green-600">${available}</p><p class="text-xs text-gray-600">Available</p></div>
                 <div class="text-center p-4 bg-red-50 rounded-lg"><p class="text-2xl font-bold commotion-red">${inUse}</p><p class="text-xs text-gray-600">In Use</p></div>
             </div>
@@ -1052,41 +1105,119 @@ function viewEvent(eventId) {
 }
 
 function toggleTaskStatus(taskId) {
-    const task = DEMO_DATA.tasks.find(t => t.id === taskId);
+    updateTaskStatus(taskId, null); // Toggle handled in updateTaskStatus
+}
+
+async function updateTaskStatus(taskId, newStatus) {
+    const task = FIRESTORE_DATA.tasks.find(t => t.id === taskId);
     if (task) {
-        task.status = task.status === 'done' ? 'todo' : 'done';
-        if (userRole === 'crew') loadCrewDashboard();
+        // If no status provided, toggle between done and todo
+        if (newStatus === null) {
+            newStatus = task.status === 'done' ? 'todo' : 'done';
+        }
+        
+        // Update in Firestore
+        const result = await firestoreHelpers.updateDoc('tasks', taskId, { status: newStatus });
+        
+        if (result.success) {
+            task.status = newStatus;
+            if (userRole === 'crew') loadCrewDashboard();
+        } else {
+            alert('Error updating task: ' + result.error);
+        }
     }
 }
 
-function updateTaskStatus(taskId, newStatus) {
-    const task = DEMO_DATA.tasks.find(t => t.id === taskId);
-    if (task) {
-        task.status = newStatus;
-        // Refresh the view
-        if (userRole === 'crew') loadCrewDashboard();
+async function saveNewEvent() {
+    const btn = document.querySelector('#modalContent button[type="submit"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+    }
+    
+    const eventColors = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#06B6D4'];
+    const randomColor = eventColors[Math.floor(Math.random() * eventColors.length)];
+    
+    const newEvent = {
+        name: document.getElementById('newEventName').value,
+        client_id: document.getElementById('newEventClient').value,
+        clientName: FIRESTORE_DATA.clients.find(c => c.id === document.getElementById('newEventClient').value)?.company || 'Unknown',
+        startDate: document.getElementById('newEventStart').value,
+        endDate: document.getElementById('newEventEnd').value,
+        location: document.getElementById('newEventLocation').value || '',
+        attendees: parseInt(document.getElementById('newEventAttendees').value) || 0,
+        quoteAmount: parseInt(document.getElementById('newEventQuote').value) || 0,
+        paidAmount: 0,
+        status: 'lead',
+        color: randomColor,
+        crewCount: 0,
+        gearValue: 0,
+        crewAssigned: [],
+        deliverables: [],
+        schedule: [],
+        notes: document.getElementById('newEventNotes').value || ''
+    };
+    
+    const result = await firestoreHelpers.addDoc('events', newEvent);
+    
+    if (result.success) {
+        closeModal();
+        // Reload data and dashboard
+        await loadFirestoreData();
+        loadAdminDashboard();
+    } else {
+        alert('Error creating event: ' + result.error);
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Create Event';
+        }
     }
 }
 
-function saveNewEvent() {
-    alert('Event created! (Demo mode - data not persisted)\n\nIn production, this would save to Firebase.');
-    closeModal();
+async function saveProfile() {
+    const btn = document.querySelector('#modalContent button[type="submit"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+    }
+    
+    const updates = {
+        name: document.getElementById('profileName').value,
+        role: document.getElementById('profileRole').value,
+        phone: document.getElementById('profilePhone').value,
+        email: document.getElementById('profileEmail').value,
+        rate: parseInt(document.getElementById('profileRate').value),
+        available: document.getElementById('profileAvailable').checked
+    };
+    
+    const result = await firestoreHelpers.updateDoc('crew', crewId, updates);
+    
+    if (result.success) {
+        closeModal();
+        await loadFirestoreData();
+        loadCrewDashboard();
+    } else {
+        alert('Error updating profile: ' + result.error);
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Save Changes';
+        }
+    }
 }
 
-function saveProfile() {
-    alert('Profile updated! (Demo mode - data not persisted)\n\nIn production, this would save to Firebase.');
-    closeModal();
-}
-
-function saveNewGear() {
+async function saveNewGear() {
+    const btn = document.querySelector('#modalContent button[type="submit"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+    }
+    
     const name = document.getElementById('newGearName').value;
     const category = document.getElementById('newGearCategory').value;
     const value = parseInt(document.getElementById('newGearValue').value);
-    const crewMember = DEMO_DATA.crew.find(c => c.id === crewId);
+    const crewMember = FIRESTORE_DATA.crew.find(c => c.id === crewId);
     
-    // Add to demo data (will show until page refresh)
     const newGear = {
-        id: 'gear-' + Date.now(),
         name: name,
         category: category,
         value: value,
@@ -1095,19 +1226,28 @@ function saveNewGear() {
         owner: crewMember ? crewMember.name : userName,
         ownerId: crewId
     };
-    DEMO_DATA.gear.push(newGear);
     
-    alert(`Gear added: ${name}\n\nThis will appear in your gear list and the admin inventory.\n\n(Demo mode - will reset on page refresh. In production, this would save to Firebase.)`);
-    closeModal();
-    loadCrewDashboard();
+    const result = await firestoreHelpers.addDoc('gear', newGear);
+    
+    if (result.success) {
+        closeModal();
+        await loadFirestoreData();
+        loadCrewDashboard();
+    } else {
+        alert('Error adding gear: ' + result.error);
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Add Gear';
+        }
+    }
 }
 
 function editCrew(crewId) {
-    alert(`Editing crew member ${crewId} (Demo mode)`);
+    alert(`Editing crew member ${crewId} - Feature coming soon!`);
 }
 
 function editScheduleItem(eventId, date, time) {
-    alert(`Editing schedule item for ${date} at ${time} (Demo mode)\n\nIn production, you could modify this schedule item and sync to all crew members.`);
+    alert(`Editing schedule item for ${date} at ${time} - Feature coming soon!`);
 }
 
 // Utility Functions

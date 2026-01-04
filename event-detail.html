@@ -108,11 +108,11 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
             <div class="border-b border-gray-200 overflow-x-auto">
                 <div class="flex px-4 sm:px-6 min-w-max">
-                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm active" onclick="switchTab('overview')">Overview</button>
-                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('schedule')">Schedule</button>
-                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('crew')">Crew</button>
-                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('deliverables')">Deliverables</button>
-                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('gear')">Gear</button>
+                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm active" onclick="switchTab('overview', this)">Overview</button>
+                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('schedule', this)">Schedule</button>
+                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('crew', this)">Crew</button>
+                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('deliverables', this)">Deliverables</button>
+                    <button class="tab-button py-3 sm:py-4 px-3 sm:px-4 font-semibold text-sm text-gray-500" onclick="switchTab('gear', this)">Gear</button>
                 </div>
             </div>
 
@@ -128,7 +128,6 @@
     </div>
 
     <script src="js/firebase-config.js"></script>
-    <script src="js/demo-data.js"></script>
     <script>
         // Check authentication
         onAuthStateChange((user) => {
@@ -139,39 +138,74 @@
         
         const urlParams = new URLSearchParams(window.location.search);
         const eventId = urlParams.get('id') || 'evt-001';
-        const event = getEventById(eventId);
         const userRole = localStorage.getItem('userRole') || 'admin';
         const userName = localStorage.getItem('userName') || 'User';
         
         document.getElementById('userName').textContent = userName;
 
-        if (event) {
-            document.getElementById('eventName').textContent = event.name;
-            document.getElementById('eventLocation').textContent = event.location;
-            document.getElementById('eventDates').textContent = formatDateRange(event.startDate, event.endDate);
-            document.getElementById('eventAttendees').textContent = event.attendees.toLocaleString();
-            document.getElementById('budgetAmount').textContent = '$' + event.quoteAmount.toLocaleString();
-            document.getElementById('paidAmount').textContent = '$' + event.paidAmount.toLocaleString();
-            document.getElementById('crewCount').textContent = event.crewCount;
-            document.getElementById('gearValue').textContent = '$' + event.gearValue.toLocaleString();
-            
-            const statusEl = document.getElementById('eventStatus');
-            statusEl.textContent = getStatusLabel(event.status);
-            statusEl.className = 'px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ' + getStatusBadgeClass(event.status);
-            
-            document.title = event.name + ' - COMMOTION.APP';
+        // Global data storage
+        let eventData = null;
+        let crewData = [];
+        let gearData = [];
+        let clientsData = [];
+
+        // Load all data from Firestore
+        async function loadData() {
+            try {
+                // Load event
+                eventData = await firestoreHelpers.getDoc('events', eventId);
+                
+                if (!eventData) {
+                    document.getElementById('tabContent').innerHTML = '<div class="text-center py-12"><p class="text-red-600">Event not found</p></div>';
+                    return;
+                }
+                
+                // Load related data in parallel
+                const [crew, gear, clients] = await Promise.all([
+                    firestoreHelpers.getCollection('crew'),
+                    firestoreHelpers.getCollection('gear'),
+                    firestoreHelpers.getCollection('clients')
+                ]);
+                
+                crewData = crew;
+                gearData = gear;
+                clientsData = clients;
+                
+                // Update header
+                document.getElementById('eventName').textContent = eventData.name;
+                document.getElementById('eventLocation').textContent = eventData.location;
+                document.getElementById('eventDates').textContent = formatDateRange(eventData.startDate, eventData.endDate);
+                document.getElementById('eventAttendees').textContent = eventData.attendees.toLocaleString();
+                document.getElementById('budgetAmount').textContent = '$' + eventData.quoteAmount.toLocaleString();
+                document.getElementById('paidAmount').textContent = '$' + eventData.paidAmount.toLocaleString();
+                document.getElementById('crewCount').textContent = eventData.crewCount;
+                document.getElementById('gearValue').textContent = '$' + eventData.gearValue.toLocaleString();
+                
+                const statusEl = document.getElementById('eventStatus');
+                statusEl.textContent = getStatusLabel(eventData.status);
+                statusEl.className = 'px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ' + getStatusBadgeClass(eventData.status);
+                
+                document.title = eventData.name + ' - COMMOTION.APP';
+                
+                // Render initial tab
+                renderTab();
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('tabContent').innerHTML = '<div class="text-center py-12"><p class="text-red-600">Error loading event data</p></div>';
+            }
         }
 
         let currentTab = 'overview';
 
-        function switchTab(tabName) {
+        function switchTab(tabName, clickedBtn) {
             currentTab = tabName;
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.classList.remove('active');
                 btn.classList.add('text-gray-500');
             });
-            event.target.classList.add('active');
-            event.target.classList.remove('text-gray-500');
+            clickedBtn.classList.add('active');
+            clickedBtn.classList.remove('text-gray-500');
             renderTab();
         }
 
@@ -187,13 +221,13 @@
         }
 
         function renderOverviewTab() {
-            const client = DEMO_DATA.clients.find(c => c.id === event.client_id) || {};
+            const client = clientsData.find(c => c.id === eventData.client_id) || {};
             return `
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-gray-50 rounded-lg p-4 sm:p-6">
                         <h3 class="text-lg font-bold text-gray-900 mb-4"><i class="fas fa-building commotion-red mr-2"></i>Client</h3>
                         <div class="space-y-3 text-sm">
-                            <div class="flex justify-between"><span class="text-gray-600">Company:</span><span class="font-semibold">${client.company || event.clientName}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-600">Company:</span><span class="font-semibold">${client.company || eventData.clientName}</span></div>
                             <div class="flex justify-between"><span class="text-gray-600">Contact:</span><span class="font-semibold">${client.contact || '--'}</span></div>
                             <div class="flex justify-between"><span class="text-gray-600">Email:</span><span class="font-semibold text-blue-600">${client.email || '--'}</span></div>
                             <div class="flex justify-between"><span class="text-gray-600">Phone:</span><span class="font-semibold">${client.phone || '--'}</span></div>
@@ -202,28 +236,28 @@
                     <div class="bg-gray-50 rounded-lg p-4 sm:p-6">
                         <h3 class="text-lg font-bold text-gray-900 mb-4"><i class="fas fa-dollar-sign commotion-red mr-2"></i>Payment</h3>
                         <div class="mb-4">
-                            <div class="flex justify-between text-sm mb-2"><span>Progress</span><span class="font-semibold">${Math.round(event.paidAmount / event.quoteAmount * 100)}%</span></div>
-                            <div class="bg-gray-200 rounded-full h-3"><div class="bg-green-500 h-3 rounded-full progress-bar" style="width: ${event.paidAmount / event.quoteAmount * 100}%"></div></div>
+                            <div class="flex justify-between text-sm mb-2"><span>Progress</span><span class="font-semibold">${Math.round(eventData.paidAmount / eventData.quoteAmount * 100)}%</span></div>
+                            <div class="bg-gray-200 rounded-full h-3"><div class="bg-green-500 h-3 rounded-full progress-bar" style="width: ${eventData.paidAmount / eventData.quoteAmount * 100}%"></div></div>
                         </div>
                         <div class="space-y-2 text-sm">
-                            <div class="flex justify-between"><span class="text-gray-600">Quote:</span><span class="font-semibold">$${event.quoteAmount.toLocaleString()}</span></div>
-                            <div class="flex justify-between"><span class="text-gray-600">Paid:</span><span class="text-green-600 font-semibold">$${event.paidAmount.toLocaleString()}</span></div>
-                            <div class="flex justify-between border-t pt-2"><span class="font-semibold">Remaining:</span><span class="font-bold commotion-red">$${(event.quoteAmount - event.paidAmount).toLocaleString()}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-600">Quote:</span><span class="font-semibold">$${eventData.quoteAmount.toLocaleString()}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-600">Paid:</span><span class="text-green-600 font-semibold">$${eventData.paidAmount.toLocaleString()}</span></div>
+                            <div class="flex justify-between border-t pt-2"><span class="font-semibold">Remaining:</span><span class="font-bold commotion-red">$${(eventData.quoteAmount - eventData.paidAmount).toLocaleString()}</span></div>
                         </div>
                     </div>
                 </div>
-                ${event.notes ? `<div class="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6 mt-6"><h3 class="text-lg font-bold text-gray-900 mb-2"><i class="fas fa-sticky-note commotion-red mr-2"></i>Notes</h3><p class="text-sm text-gray-700">${event.notes}</p></div>` : ''}
+                ${eventData.notes ? `<div class="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6 mt-6"><h3 class="text-lg font-bold text-gray-900 mb-2"><i class="fas fa-sticky-note commotion-red mr-2"></i>Notes</h3><p class="text-sm text-gray-700">${eventData.notes}</p></div>` : ''}
             `;
         }
 
         function renderScheduleTab() {
-            if (!event.schedule || event.schedule.length === 0) {
+            if (!eventData.schedule || eventData.schedule.length === 0) {
                 return `<div class="text-center py-12 text-gray-500"><i class="fas fa-calendar-times text-4xl mb-3"></i><p>No schedule available</p><button onclick="addScheduleDay()" class="mt-4 px-4 py-2 bg-commotion-red text-white rounded-lg text-sm font-semibold">Create Schedule</button></div>`;
             }
             
             return `
                 <div class="space-y-6">
-                    ${event.schedule.map(day => `
+                    ${eventData.schedule.map(day => `
                         <div class="border-l-4 border-red-200 pl-4">
                             <div class="flex justify-between items-center mb-3">
                                 <h3 class="font-bold text-gray-900">${day.title}</h3>
@@ -235,7 +269,7 @@
                                         <span class="text-sm font-semibold commotion-red w-14 flex-shrink-0">${item.time}</span>
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-gray-900">${item.activity}</p>
-                                            ${item.crew && item.crew.length > 0 ? `<p class="text-xs text-gray-500 mt-1 truncate"><i class="fas fa-users mr-1"></i>${item.crew.map(c => DEMO_DATA.crew.find(cr => cr.id === c)?.name || c).join(', ')}</p>` : ''}
+                                            ${item.crew && item.crew.length > 0 ? `<p class="text-xs text-gray-500 mt-1 truncate"><i class="fas fa-users mr-1"></i>${item.crew.map(c => crewData.find(cr => cr.id === c)?.name || c).join(', ')}</p>` : ''}
                                         </div>
                                         <i class="fas fa-edit text-gray-400 ml-2"></i>
                                     </div>
@@ -249,7 +283,7 @@
         }
 
         function renderCrewTab() {
-            const assignedCrew = event.crewAssigned ? event.crewAssigned.map(id => DEMO_DATA.crew.find(c => c.id === id)).filter(Boolean) : [];
+            const assignedCrew = eventData.crewAssigned ? eventData.crewAssigned.map(id => crewData.find(c => c.id === id)).filter(Boolean) : [];
             
             if (assignedCrew.length === 0) {
                 return `<div class="text-center py-12 text-gray-500"><i class="fas fa-users text-4xl mb-3"></i><p>No crew assigned</p><button onclick="assignCrew()" class="mt-4 px-4 py-2 bg-commotion-red text-white rounded-lg text-sm font-semibold">Assign Crew</button></div>`;
@@ -280,13 +314,13 @@
         }
 
         function renderDeliverablesTab() {
-            if (!event.deliverables || event.deliverables.length === 0) {
+            if (!eventData.deliverables || eventData.deliverables.length === 0) {
                 return `<div class="text-center py-12 text-gray-500"><i class="fas fa-film text-4xl mb-3"></i><p>No deliverables defined</p><button onclick="addDeliverable()" class="mt-4 px-4 py-2 bg-commotion-red text-white rounded-lg text-sm font-semibold">Add Deliverable</button></div>`;
             }
             
             return `
                 <div class="space-y-4">
-                    ${event.deliverables.map(d => `
+                    ${eventData.deliverables.map(d => `
                         <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
                             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
                                 <div>
@@ -311,13 +345,13 @@
         }
 
         function renderGearTab() {
-            const assignedGear = DEMO_DATA.gear.filter(g => g.assignedTo === eventId);
+            const assignedGear = gearData.filter(g => g.assignedTo === eventId);
             
             return `
                 <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-semibold text-gray-900">Total Insurance Value:</span>
-                        <span class="text-xl font-bold commotion-red">$${event.gearValue.toLocaleString()}</span>
+                        <span class="text-xl font-bold commotion-red">$${eventData.gearValue.toLocaleString()}</span>
                     </div>
                 </div>
                 ${assignedGear.length > 0 ? `
@@ -353,57 +387,57 @@
                         <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-edit mr-2 commotion-red"></i>Edit Event</h2>
                         <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
                     </div>
-                    <form onsubmit="event.preventDefault(); saveEventChanges();" class="space-y-4">
+                    <form onsubmit="handleSaveEvent(event)" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Event Name</label>
-                            <input type="text" id="editEventName" value="${event.name}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            <input type="text" id="editEventName" value="${eventData.name}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                                <input type="date" id="editEventStart" value="${event.startDate}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <input type="date" id="editEventStart" value="${eventData.startDate}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                                <input type="date" id="editEventEnd" value="${event.endDate}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <input type="date" id="editEventEnd" value="${eventData.endDate}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
                             </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                            <input type="text" id="editEventLocation" value="${event.location}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <input type="text" id="editEventLocation" value="${eventData.location}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Attendees</label>
-                                <input type="number" id="editEventAttendees" value="${event.attendees}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <input type="number" id="editEventAttendees" value="${eventData.attendees}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                                 <select id="editEventStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                                    <option value="lead" ${event.status === 'lead' ? 'selected' : ''}>Lead</option>
-                                    <option value="quote-sent" ${event.status === 'quote-sent' ? 'selected' : ''}>Quote Sent</option>
-                                    <option value="confirmed" ${event.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
-                                    <option value="in-progress" ${event.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
-                                    <option value="completed" ${event.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                    <option value="lead" ${eventData.status === 'lead' ? 'selected' : ''}>Lead</option>
+                                    <option value="quote-sent" ${eventData.status === 'quote-sent' ? 'selected' : ''}>Quote Sent</option>
+                                    <option value="confirmed" ${eventData.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                                    <option value="in-progress" ${eventData.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                                    <option value="completed" ${eventData.status === 'completed' ? 'selected' : ''}>Completed</option>
                                 </select>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Quote Amount ($)</label>
-                                <input type="number" id="editEventQuote" value="${event.quoteAmount}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <input type="number" id="editEventQuote" value="${eventData.quoteAmount}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Paid Amount ($)</label>
-                                <input type="number" id="editEventPaid" value="${event.paidAmount}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <input type="number" id="editEventPaid" value="${eventData.paidAmount}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
                             </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                            <textarea id="editEventNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${event.notes || ''}</textarea>
+                            <textarea id="editEventNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${eventData.notes || ''}</textarea>
                         </div>
                         <div class="flex gap-3 pt-4">
-                            <button type="submit" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
+                            <button type="submit" id="saveEventBtn" class="flex-1 px-4 py-3 bg-commotion-red hover-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
                             <button type="button" onclick="closeEventModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
                         </div>
                     </form>
@@ -413,7 +447,40 @@
             modal.classList.add('flex');
         }
         
+        async function handleSaveEvent(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveEventBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
+            const updates = {
+                name: document.getElementById('editEventName').value,
+                startDate: document.getElementById('editEventStart').value,
+                endDate: document.getElementById('editEventEnd').value,
+                location: document.getElementById('editEventLocation').value,
+                attendees: parseInt(document.getElementById('editEventAttendees').value),
+                status: document.getElementById('editEventStatus').value,
+                quoteAmount: parseInt(document.getElementById('editEventQuote').value),
+                paidAmount: parseInt(document.getElementById('editEventPaid').value),
+                notes: document.getElementById('editEventNotes').value
+            };
+            
+            const result = await firestoreHelpers.updateDoc('events', eventId, updates);
+            
+            if (result.success) {
+                closeEventModal();
+                // Reload data to show changes
+                await loadData();
+            } else {
+                alert('Error saving changes: ' + result.error);
+                btn.disabled = false;
+                btn.textContent = 'Save Changes';
+            }
+        }
+        
         function saveEventChanges() {
+            // Legacy function - now handled by handleSaveEvent
+        }
             alert('Changes saved! (Demo mode - data not persisted to Firebase yet)');
             closeEventModal();
         }
@@ -453,8 +520,8 @@
             });
         }
 
-        // Initial render
-        renderTab();
+        // Load data and render
+        loadData();
     </script>
 
 </body>
