@@ -129,13 +129,6 @@
 
     <script src="js/firebase-config.js"></script>
     <script>
-        // Check authentication
-        onAuthStateChange((user) => {
-            if (!user) {
-                window.location.href = 'index.html';
-            }
-        });
-        
         const urlParams = new URLSearchParams(window.location.search);
         const eventId = urlParams.get('id') || 'evt-001';
         const userRole = localStorage.getItem('userRole') || 'admin';
@@ -148,6 +141,16 @@
         let crewData = [];
         let gearData = [];
         let clientsData = [];
+
+        // Check authentication and load data
+        onAuthStateChange((user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+            } else {
+                // User is authenticated, load the data
+                loadData();
+            }
+        });
 
         // Load all data from Firestore
         async function loadData() {
@@ -478,21 +481,612 @@
             }
         }
         
-        function saveEventChanges() {
-            // Legacy function - now handled by handleSaveEvent
+        function exportEvent() { 
+            // Generate a simple text export
+            const exportData = `
+EVENT DETAILS
+=============
+Name: ${eventData.name}
+Location: ${eventData.location}
+Dates: ${formatDateRange(eventData.startDate, eventData.endDate)}
+Status: ${getStatusLabel(eventData.status)}
+Attendees: ${eventData.attendees.toLocaleString()}
+
+FINANCIALS
+----------
+Quote: $${eventData.quoteAmount.toLocaleString()}
+Paid: $${eventData.paidAmount.toLocaleString()}
+Remaining: $${(eventData.quoteAmount - eventData.paidAmount).toLocaleString()}
+
+CREW (${eventData.crewCount})
+----
+${eventData.crewAssigned ? eventData.crewAssigned.map(id => {
+    const c = crewData.find(cr => cr.id === id);
+    return c ? `- ${c.name} (${c.role})` : '';
+}).filter(Boolean).join('\n') : 'No crew assigned'}
+
+NOTES
+-----
+${eventData.notes || 'No notes'}
+            `.trim();
+            
+            const blob = new Blob([exportData], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${eventData.name.replace(/\s+/g, '_')}_export.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
-            alert('Changes saved! (Demo mode - data not persisted to Firebase yet)');
+        
+        function addScheduleDay() { 
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('eventModalContent');
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-calendar-plus mr-2 commotion-red"></i>Add Schedule Day</h2>
+                        <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="handleAddScheduleDay(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                            <input type="date" id="newDayDate" min="${eventData.startDate}" max="${eventData.endDate}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Day Title</label>
+                            <input type="text" id="newDayTitle" placeholder="e.g., Day 1 - Setup" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" id="addDayBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Add Day</button>
+                            <button type="button" onclick="closeEventModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        async function handleAddScheduleDay(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addDayBtn');
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+            
+            const newDay = {
+                date: document.getElementById('newDayDate').value,
+                title: document.getElementById('newDayTitle').value,
+                items: []
+            };
+            
+            const schedule = eventData.schedule || [];
+            schedule.push(newDay);
+            schedule.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            const result = await firestoreHelpers.updateDoc('events', eventId, { schedule });
+            
+            if (result.success) {
+                closeEventModal();
+                await loadData();
+            } else {
+                alert('Error adding schedule day: ' + result.error);
+                btn.disabled = false;
+                btn.textContent = 'Add Day';
+            }
+        }
+        
+        function addScheduleItem() { 
+            const days = eventData.schedule || [];
+            if (days.length === 0) {
+                alert('Please add a schedule day first');
+                return;
+            }
+            
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('eventModalContent');
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-clock mr-2 commotion-red"></i>Add Schedule Item</h2>
+                        <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="handleAddScheduleItem(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Day</label>
+                            <select id="itemDay" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                ${days.map(d => `<option value="${d.date}">${d.title} (${d.date})</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                            <input type="time" id="itemTime" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Activity</label>
+                            <input type="text" id="itemActivity" placeholder="e.g., Main stage coverage" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Assigned Crew</label>
+                            <div class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-2">
+                                ${(eventData.crewAssigned || []).map(id => {
+                                    const c = crewData.find(cr => cr.id === id);
+                                    return c ? `<label class="flex items-center"><input type="checkbox" value="${c.id}" class="item-crew-checkbox mr-2"> ${c.name}</label>` : '';
+                                }).join('')}
+                            </div>
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" id="addItemBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Add Item</button>
+                            <button type="button" onclick="closeEventModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        async function handleAddScheduleItem(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addItemBtn');
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+            
+            const selectedCrew = Array.from(document.querySelectorAll('.item-crew-checkbox:checked')).map(cb => cb.value);
+            const dayDate = document.getElementById('itemDay').value;
+            const time = document.getElementById('itemTime').value;
+            const timeFormatted = time.replace(':', '');
+            const displayTime = new Date('2000-01-01T' + time).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            const newItem = {
+                time: displayTime,
+                activity: document.getElementById('itemActivity').value,
+                crew: selectedCrew
+            };
+            
+            const schedule = eventData.schedule.map(day => {
+                if (day.date === dayDate) {
+                    day.items = [...(day.items || []), newItem].sort((a, b) => a.time.localeCompare(b.time));
+                }
+                return day;
+            });
+            
+            const result = await firestoreHelpers.updateDoc('events', eventId, { schedule });
+            
+            if (result.success) {
+                closeEventModal();
+                await loadData();
+            } else {
+                alert('Error adding schedule item: ' + result.error);
+                btn.disabled = false;
+                btn.textContent = 'Add Item';
+            }
+        }
+        
+        function editScheduleItem(date, time) { 
+            const day = eventData.schedule.find(d => d.date === date);
+            const item = day?.items.find(i => i.time === time);
+            if (!item) return;
+            
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('eventModalContent');
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-edit mr-2 commotion-red"></i>Edit Schedule Item</h2>
+                        <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="handleEditScheduleItem(event, '${date}', '${time}')" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                            <input type="time" id="editItemTime" value="${time.replace(':', '')}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Activity</label>
+                            <input type="text" id="editItemActivity" value="${item.activity}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Assigned Crew</label>
+                            <div class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-2">
+                                ${(eventData.crewAssigned || []).map(id => {
+                                    const c = crewData.find(cr => cr.id === id);
+                                    const checked = (item.crew || []).includes(id) ? 'checked' : '';
+                                    return c ? `<label class="flex items-center"><input type="checkbox" value="${c.id}" ${checked} class="edit-crew-checkbox mr-2"> ${c.name}</label>` : '';
+                                }).join('')}
+                            </div>
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" id="editItemBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
+                            <button type="button" onclick="handleDeleteScheduleItem('${date}', '${time}')" class="px-4 py-3 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-semibold">Delete</button>
+                            <button type="button" onclick="closeEventModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        async function handleEditScheduleItem(e, date, oldTime) {
+            e.preventDefault();
+            const btn = document.getElementById('editItemBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
+            const selectedCrew = Array.from(document.querySelectorAll('.edit-crew-checkbox:checked')).map(cb => cb.value);
+            const time = document.getElementById('editItemTime').value;
+            const displayTime = new Date('2000-01-01T' + time).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            const schedule = eventData.schedule.map(day => {
+                if (day.date === date) {
+                    day.items = day.items.map(item => {
+                        if (item.time === oldTime) {
+                            return {
+                                time: displayTime,
+                                activity: document.getElementById('editItemActivity').value,
+                                crew: selectedCrew
+                            };
+                        }
+                        return item;
+                    }).sort((a, b) => a.time.localeCompare(b.time));
+                }
+                return day;
+            });
+            
+            const result = await firestoreHelpers.updateDoc('events', eventId, { schedule });
+            
+            if (result.success) {
+                closeEventModal();
+                await loadData();
+            } else {
+                alert('Error updating schedule item: ' + result.error);
+                btn.disabled = false;
+                btn.textContent = 'Save Changes';
+            }
+        }
+        
+        async function handleDeleteScheduleItem(date, time) {
+            if (!confirm('Delete this schedule item?')) return;
+            
+            const schedule = eventData.schedule.map(day => {
+                if (day.date === date) {
+                    day.items = day.items.filter(item => item.time !== time);
+                }
+                return day;
+            });
+            
+            const result = await firestoreHelpers.updateDoc('events', eventId, { schedule });
+            
+            if (result.success) {
+                closeEventModal();
+                await loadData();
+            } else {
+                alert('Error deleting schedule item: ' + result.error);
+            }
+        }
+        
+        function assignCrew() { 
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('eventModalContent');
+            const assigned = eventData.crewAssigned || [];
+            
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-users mr-2 commotion-red"></i>Assign Crew</h2>
+                        <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="handleAssignCrew(event)" class="space-y-4">
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                            ${crewData.map(c => `
+                                <label class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
+                                    <input type="checkbox" value="${c.id}" ${assigned.includes(c.id) ? 'checked' : ''} class="assign-crew-checkbox mr-3">
+                                    <div class="flex-1">
+                                        <span class="font-semibold">${c.name}</span>
+                                        <span class="text-gray-500 text-sm ml-2">${c.role}</span>
+                                    </div>
+                                    <span class="text-sm text-gray-500">$${c.rate}/day</span>
+                                    ${c.available ? '<span class="ml-2 w-2 h-2 bg-green-500 rounded-full"></span>' : '<span class="ml-2 w-2 h-2 bg-red-500 rounded-full"></span>'}
+                                </label>
+                            `).join('')}
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" id="assignCrewBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Save Assignments</button>
+                            <button type="button" onclick="closeEventModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        async function handleAssignCrew(e) {
+            e.preventDefault();
+            const btn = document.getElementById('assignCrewBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
+            const selectedCrew = Array.from(document.querySelectorAll('.assign-crew-checkbox:checked')).map(cb => cb.value);
+            
+            const result = await firestoreHelpers.updateDoc('events', eventId, { 
+                crewAssigned: selectedCrew,
+                crewCount: selectedCrew.length
+            });
+            
+            if (result.success) {
+                closeEventModal();
+                await loadData();
+            } else {
+                alert('Error assigning crew: ' + result.error);
+                btn.disabled = false;
+                btn.textContent = 'Save Assignments';
+            }
+        }
+        
+        function viewCrewMember(id) { 
+            const crew = crewData.find(c => c.id === id);
+            if (!crew) return;
+            
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('eventModalContent');
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-user mr-2 commotion-red"></i>Crew Profile</h2>
+                        <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <div class="text-center mb-6">
+                        <div class="w-20 h-20 rounded-full bg-commotion-red text-white flex items-center justify-center text-2xl font-bold mx-auto mb-3">
+                            ${crew.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <h3 class="text-xl font-bold">${crew.name}</h3>
+                        <p class="text-gray-500">${crew.role}</p>
+                    </div>
+                    <div class="space-y-3 bg-gray-50 rounded-lg p-4">
+                        <div class="flex justify-between"><span class="text-gray-600">Day Rate:</span><span class="font-semibold">$${crew.rate}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Phone:</span><span class="font-semibold">${crew.phone}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Email:</span><a href="mailto:${crew.email}" class="font-semibold text-blue-600">${crew.email}</a></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Status:</span><span class="font-semibold ${crew.available ? 'text-green-600' : 'text-red-600'}">${crew.available ? 'Available' : 'Unavailable'}</span></div>
+                        ${crew.skills ? `<div class="pt-2 border-t"><span class="text-gray-600 text-sm">Skills:</span><div class="flex flex-wrap gap-1 mt-1">${crew.skills.map(s => `<span class="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded-full">${s}</span>`).join('')}</div></div>` : ''}
+                    </div>
+                    <button onclick="closeEventModal()" class="w-full mt-6 px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Close</button>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        function addDeliverable() { 
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('eventModalContent');
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-film mr-2 commotion-red"></i>Add Deliverable</h2>
+                        <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="handleAddDeliverable(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                            <select id="delType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="Highlight Reel">Highlight Reel</option>
+                                <option value="After Movie">After Movie</option>
+                                <option value="Social Media Package">Social Media Package</option>
+                                <option value="Full Coverage">Full Coverage</option>
+                                <option value="Artist Interviews">Artist Interviews</option>
+                                <option value="Documentary">Documentary</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Duration/Details</label>
+                            <input type="text" id="delDuration" placeholder="e.g., 3-5 min, 10x clips" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                            <input type="date" id="delDueDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" id="addDelBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Add Deliverable</button>
+                            <button type="button" onclick="closeEventModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        async function handleAddDeliverable(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addDelBtn');
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+            
+            const newDeliverable = {
+                id: 'del-' + Date.now(),
+                type: document.getElementById('delType').value,
+                duration: document.getElementById('delDuration').value,
+                dueDate: document.getElementById('delDueDate').value,
+                status: 'pending',
+                progress: 0
+            };
+            
+            const deliverables = [...(eventData.deliverables || []), newDeliverable];
+            
+            const result = await firestoreHelpers.updateDoc('events', eventId, { deliverables });
+            
+            if (result.success) {
+                closeEventModal();
+                await loadData();
+            } else {
+                alert('Error adding deliverable: ' + result.error);
+                btn.disabled = false;
+                btn.textContent = 'Add Deliverable';
+            }
+        }
+        
+        function editDeliverable(id) { 
+            const del = eventData.deliverables.find(d => d.id === id);
+            if (!del) return;
+            
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('eventModalContent');
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-edit mr-2 commotion-red"></i>Edit Deliverable</h2>
+                        <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="handleEditDeliverable(event, '${id}')" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                            <input type="text" id="editDelType" value="${del.type}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Duration/Details</label>
+                            <input type="text" id="editDelDuration" value="${del.duration}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                            <input type="date" id="editDelDueDate" value="${del.dueDate}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select id="editDelStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="pending" ${del.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="in-progress" ${del.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                                <option value="completed" ${del.status === 'completed' ? 'selected' : ''}>Completed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Progress: <span id="progressLabel">${del.progress || 0}%</span></label>
+                            <input type="range" id="editDelProgress" min="0" max="100" value="${del.progress || 0}" oninput="document.getElementById('progressLabel').textContent = this.value + '%'" class="w-full">
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" id="editDelBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
+                            <button type="button" onclick="handleDeleteDeliverable('${id}')" class="px-4 py-3 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-semibold">Delete</button>
+                            <button type="button" onclick="closeEventModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        async function handleEditDeliverable(e, id) {
+            e.preventDefault();
+            const btn = document.getElementById('editDelBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
+            const deliverables = eventData.deliverables.map(d => {
+                if (d.id === id) {
+                    return {
+                        ...d,
+                        type: document.getElementById('editDelType').value,
+                        duration: document.getElementById('editDelDuration').value,
+                        dueDate: document.getElementById('editDelDueDate').value,
+                        status: document.getElementById('editDelStatus').value,
+                        progress: parseInt(document.getElementById('editDelProgress').value)
+                    };
+                }
+                return d;
+            });
+            
+            const result = await firestoreHelpers.updateDoc('events', eventId, { deliverables });
+            
+            if (result.success) {
+                closeEventModal();
+                await loadData();
+            } else {
+                alert('Error updating deliverable: ' + result.error);
+                btn.disabled = false;
+                btn.textContent = 'Save Changes';
+            }
+        }
+        
+        async function handleDeleteDeliverable(id) {
+            if (!confirm('Delete this deliverable?')) return;
+            
+            const deliverables = eventData.deliverables.filter(d => d.id !== id);
+            
+            const result = await firestoreHelpers.updateDoc('events', eventId, { deliverables });
+            
+            if (result.success) {
+                closeEventModal();
+                await loadData();
+            } else {
+                alert('Error deleting deliverable: ' + result.error);
+            }
+        }
+        
+        function assignGear() { 
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('eventModalContent');
+            const availableGear = gearData.filter(g => g.status === 'available' || g.assignedTo === eventId);
+            
+            content.innerHTML = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-camera mr-2 commotion-red"></i>Assign Gear</h2>
+                        <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <form onsubmit="handleAssignGear(event)" class="space-y-4">
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                            ${availableGear.map(g => `
+                                <label class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
+                                    <input type="checkbox" value="${g.id}" ${g.assignedTo === eventId ? 'checked' : ''} class="assign-gear-checkbox mr-3">
+                                    <div class="flex-1">
+                                        <span class="font-semibold">${g.name}</span>
+                                        <span class="text-gray-500 text-sm ml-2">${g.category}</span>
+                                    </div>
+                                    <span class="text-sm font-semibold">$${g.value.toLocaleString()}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit" id="assignGearBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Save Assignments</button>
+                            <button type="button" onclick="closeEventModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        async function handleAssignGear(e) {
+            e.preventDefault();
+            const btn = document.getElementById('assignGearBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
+            const selectedGearIds = Array.from(document.querySelectorAll('.assign-gear-checkbox:checked')).map(cb => cb.value);
+            
+            // Update each gear item
+            let totalValue = 0;
+            for (const gear of gearData) {
+                if (selectedGearIds.includes(gear.id)) {
+                    // Assign to this event
+                    if (gear.assignedTo !== eventId) {
+                        await firestoreHelpers.updateDoc('gear', gear.id, { assignedTo: eventId, status: 'in-use' });
+                    }
+                    totalValue += gear.value;
+                } else if (gear.assignedTo === eventId) {
+                    // Unassign from this event
+                    await firestoreHelpers.updateDoc('gear', gear.id, { assignedTo: null, status: 'available' });
+                }
+            }
+            
+            // Update event gear value
+            await firestoreHelpers.updateDoc('events', eventId, { gearValue: totalValue });
+            
             closeEventModal();
+            await loadData();
         }
-        function exportEvent() { alert('Export event data (Demo mode)'); }
-        function addScheduleDay() { alert('Add schedule day (Demo mode)'); }
-        function addScheduleItem() { alert('Add schedule item (Demo mode)'); }
-        function editScheduleItem(date, time) { alert(`Edit schedule item: ${date} ${time} (Demo mode)`); }
-        function assignCrew() { alert('Assign crew (Demo mode)'); }
-        function viewCrewMember(id) { alert(`View crew member ${id} (Demo mode)`); }
-        function addDeliverable() { alert('Add deliverable (Demo mode)'); }
-        function editDeliverable(id) { alert(`Edit deliverable ${id} (Demo mode)`); }
-        function assignGear() { alert('Assign gear (Demo mode)'); }
         function closeEventModal() { document.getElementById('eventModal').classList.add('hidden'); document.getElementById('eventModal').classList.remove('flex'); }
 
         // Utility functions
@@ -519,9 +1113,6 @@
                 window.location.href = 'index.html';
             });
         }
-
-        // Load data and render
-        loadData();
     </script>
 
 </body>

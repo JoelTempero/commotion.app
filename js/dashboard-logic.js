@@ -1242,12 +1242,88 @@ async function saveNewGear() {
     }
 }
 
-function editCrew(crewId) {
-    alert(`Editing crew member ${crewId} - Feature coming soon!`);
+function editCrew(crewMemberId) {
+    const crew = FIRESTORE_DATA.crew.find(c => c.id === crewMemberId);
+    if (!crew) return;
+    
+    const modal = document.getElementById('modal');
+    const content = document.getElementById('modalContent');
+    content.innerHTML = `
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-user-edit mr-2 commotion-red"></i>Edit Crew Member</h2>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <form onsubmit="handleEditCrew(event, '${crew.id}')" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input type="text" id="editCrewName" value="${crew.name}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <input type="text" id="editCrewRole" value="${crew.role}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Day Rate ($)</label>
+                    <input type="number" id="editCrewRate" value="${crew.rate}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Available</label>
+                    <select id="editCrewAvailable" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        <option value="true" ${crew.available ? 'selected' : ''}>Available</option>
+                        <option value="false" ${!crew.available ? 'selected' : ''}>Unavailable</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input type="tel" id="editCrewPhone" value="${crew.phone}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="editCrewEmail" value="${crew.email}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div class="flex gap-3 pt-4">
+                <button type="submit" id="saveCrewBtn" class="flex-1 px-4 py-3 bg-commotion-red text-white rounded-lg font-semibold">Save Changes</button>
+                <button type="button" onclick="closeModal()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold">Cancel</button>
+            </div>
+        </form>
+    `;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+async function handleEditCrew(e, crewMemberId) {
+    e.preventDefault();
+    const btn = document.getElementById('saveCrewBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    
+    const updates = {
+        name: document.getElementById('editCrewName').value,
+        role: document.getElementById('editCrewRole').value,
+        rate: parseInt(document.getElementById('editCrewRate').value),
+        available: document.getElementById('editCrewAvailable').value === 'true',
+        phone: document.getElementById('editCrewPhone').value,
+        email: document.getElementById('editCrewEmail').value
+    };
+    
+    const result = await firestoreHelpers.updateDoc('crew', crewMemberId, updates);
+    
+    if (result.success) {
+        closeModal();
+        await loadFirestoreData();
+        loadAdminDashboard();
+    } else {
+        alert('Error updating crew member: ' + result.error);
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+    }
 }
 
 function editScheduleItem(eventId, date, time) {
-    alert(`Editing schedule item for ${date} at ${time} - Feature coming soon!`);
+    // Redirect to event detail page for schedule editing
+    window.location.href = `event-detail.html?id=${eventId}`;
 }
 
 // Utility Functions
